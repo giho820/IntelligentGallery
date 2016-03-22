@@ -1,0 +1,42 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorMajor</item>
+        <item name="colorPrimaryDark">@color/colorMajor</item>
+        <item name="colorAccent">#00b8ac</item>
+        <item name="android:textColorSecondary">#63646a</item>
+    </style>
+
+    <style name="myActionButtonStyle" parent="Widget.AppCompat.ActionButton">
+
+    </style>
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light">
+        <item name="android:background">@color/colorMajor</item>
+        <item name="android:textColor">@color/colorMajorText</item>
+    </style>
+
+    <style name="Toolbar" parent="ThemeOverlay.AppCompat.Light">
+
+        <!--<item name="android:textColorPrimary">@color/c_ffffffff_ff9b9b9b</item>-->
+        <!--<item name="actionMenuTextColor">@color/c_ffffffff_ff9b9b9b</item>-->
+
+        <!--<item name="android:background">@color/colorMajor</item>-->
+        <!--<item name="android:textColorPrimary">@color/colorMajorText</item>-->
+        <item name="actionMenuTextColor">@color/colorMajorText</item>
+
+    </style>
+
+    <style name="ProgressBarStyle" parent="@android:style/Widget.ProgressBar.Horizontal" />
+
+
+</resources>

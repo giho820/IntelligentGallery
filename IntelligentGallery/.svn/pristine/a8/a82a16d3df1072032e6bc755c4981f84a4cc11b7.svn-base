@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="kr.ac.korea.intelligentgallery.act.MainAct"
+    >
+
+    <item
+        android:id="@+id/action_trash"
+        android:orderInCategory="100"
+        android:title="@string/action_trashing"
+        android:icon="@drawable/ic_menu_trash"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_concealing"
+        android:orderInCategory="100"
+        android:title="@string/action_hiding"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_renaming"
+        android:orderInCategory="100"
+        android:title="@string/action_renaming"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_select_cover_image"
+        android:orderInCategory="100"
+        android:title="@string/action_select_cover_image"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_select_all"
+        android:orderInCategory="100"
+        android:title="@string/action_select_all"
+        app:showAsAction="never" />
+</menu>

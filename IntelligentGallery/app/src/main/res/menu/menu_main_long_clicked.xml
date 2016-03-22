@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="kr.ac.korea.intelligentgallery.act.MainAct">
+
+    <item
+        android:id="@+id/action_trash"
+        android:icon="@drawable/ic_menu_trash"
+        android:orderInCategory="100"
+        android:title="@string/action_trashing"
+        app:showAsAction="always">
+        <menu>
+            <item
+                android:id="@+id/action_trash_confirm"
+                android:icon="@drawable/ic_menu_trash_confirm"
+                android:title="@string/action_delete_confirm"
+                app:showAsAction="always" />
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/action_concealing"
+        android:orderInCategory="100"
+        android:title="@string/action_hiding"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_renaming"
+        android:orderInCategory="100"
+        android:title="@string/action_renaming"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_select_cover_image"
+        android:orderInCategory="100"
+        android:title="@string/action_select_cover_image"
+        app:showAsAction="never" >
+        <menu>
+            <item
+                android:id="@+id/action_cover_basic"
+                android:title="@string/action_cover_basic"/>
+            <item
+                android:id="@+id/action_cover_select"
+                android:title="@string/action_cover_select" />
+        </menu>
+    </item>.
+
+    <item
+        android:id="@+id/action_select_all"
+        android:orderInCategory="100"
+        android:title="@string/action_select_all"
+        app:showAsAction="never" />
+</menu>

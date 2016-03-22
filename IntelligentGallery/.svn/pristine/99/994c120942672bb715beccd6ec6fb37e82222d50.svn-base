@@ -1,0 +1,656 @@
+package kr.ac.korea.intelligentgallery.fragment;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Bundle;
+import android.os.Handler;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.CheckBox;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+import com.nostra13.universalimageloader.cache.disc.naming.Md5FileNameGenerator;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.assist.ImageScaleType;
+import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
+import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
+import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
+import com.nostra13.universalimageloader.core.listener.PauseOnScrollListener;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import kr.ac.korea.intelligentgallery.R;
+import kr.ac.korea.intelligentgallery.act.FolderCategoryAct;
+import kr.ac.korea.intelligentgallery.act.MainAct;
+import kr.ac.korea.intelligentgallery.common.ParentFrag;
+import kr.ac.korea.intelligentgallery.data.ViewItem;
+import kr.ac.korea.intelligentgallery.listener.OnBackPressedListener;
+import kr.ac.korea.intelligentgallery.util.DebugUtil;
+import kr.ac.korea.intelligentgallery.util.FileUtil;
+import kr.ac.korea.intelligentgallery.util.ImageUtil;
+import kr.ac.korea.intelligentgallery.util.TextUtil;
+
+/**
+ * FolderCategoryAct 안에 있는 CategroyFrag 현재 미적용
+ */
+public class CategoryFrag extends ParentFrag implements OnBackPressedListener {
+
+    public static Context mContext;
+    private FolderCategoryAct folderCategoryAct;
+    public static View view;
+
+    private List<ViewItem> gridItems = null;
+
+    private int clickedcId;
+    public List<ViewItem> imagesInFolder = null;
+    public Set<Integer> selectedPositions = null;
+    public List<Integer> selectedPositionsList = null;
+    public GridView gridViewCategoryFrag;
+
+    public static boolean isLongClicked = false;
+    public CategoryImageAdapter imageAdapter;
+    public ImageLoader imageLoader;
+
+    //Using PauseOnScrollListener To avoid grid scrolling lags
+    boolean pauseOnScroll = false; // or true
+    boolean pauseOnFling = false; // or false
+
+    public CategoryFrag() {
+    }
+
+    public CategoryFrag(Integer clickedcId) {
+        this.clickedcId = clickedcId;
+        imageLoader = ImageLoader.getInstance();
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        DebugUtil.showDebug("CategoryFrag, onCreate()");
+        super.onCreate(savedInstanceState);
+
+        mContext = getActivity();
+        folderCategoryAct = (FolderCategoryAct) getActivity();
+
+        selectedPositions = new HashSet<>();
+        selectedPositionsList = new ArrayList<>();
+
+        // if this is set true,
+        // Activity.onCreateOptionsMenu will call Fragment.onCreateOptionsMenu
+        // Activity.onOptionsItemSelected will call Fragment.onOptionsItemSelected
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        view = inflater.inflate(R.layout.fragment_category, null);
+        folderCategoryAct.toolbar.inflateMenu(R.menu.menu_category);
+
+
+        if (clickedcId >= 0) {
+            DebugUtil.showDebug("CategoryFrag, onCreateView(), clickedcId : " + clickedcId);
+            imagesInFolder = FileUtil.createViewItems(clickedcId);
+        } else {
+            DebugUtil.showDebug("FolderFrag, onCreateView(), root path is null");
+        }
+
+        DebugUtil.showDebug("CategoryFrag, onCreateView(), test ");
+        if(imagesInFolder != null && imagesInFolder.size() >= 0) {
+            for(ViewItem i :imagesInFolder){
+                DebugUtil.showDebug("i : " + i +", " + i.getPath());
+            }
+        }
+
+        gridViewCategoryFrag = (GridView) view.findViewById(R.id.gridViewCategory);
+        imageAdapter = new CategoryImageAdapter(folderCategoryAct, imagesInFolder);
+        gridViewCategoryFrag.setAdapter(imageAdapter);
+
+        //Using PauseOnScrollListener To avoid grid scrolling lags
+        PauseOnScrollListener listener = new PauseOnScrollListener(imageLoader, pauseOnScroll, pauseOnFling);
+        gridViewCategoryFrag.setOnScrollListener(listener);
+
+
+        return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // destroy all menu and re-call onCreateOptionsMenu
+        folderCategoryAct.invalidateOptionsMenu();
+        DebugUtil.showDebug("FolderCategoryAct, onResume(), invalidateOptionMenu ");
+    }
+
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // Do something that differs the Activity's menu here
+        DebugUtil.showDebug("FolderFrag, onCreateOptionMenu() : ");
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    /**
+     * 메뉴 아이템 클릭
+     *
+     * @param item
+     * @return
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        DebugUtil.showDebug("FolderCategoryAct, onOptionsItemSelected : " + item.getItemId());
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                DebugUtil.showDebug("FolderFrag, onOptionItemSelected, case android.R.id.home:");
+                onBackPressed();
+                return true;
+
+            case R.id.action_slide_show:
+                DebugUtil.showToast(folderCategoryAct, "슬라이드쇼 하기");
+                return true;
+            case R.id.action_select_mode:
+                DebugUtil.showToast(folderCategoryAct, "다중 선택하기");
+
+                DebugUtil.showDebug("FolderFrag, onOptionsItemSelected, onOptionsItemSelected() ");
+                CategoryFrag.isLongClicked = true;
+                //어댑터 갱신을 통해 화면에 체크박스가 나타나도록 함
+                imageAdapter.notifyDataSetChanged();
+
+                //FolderCategory 액티비티의 메뉴를 변경해야한다
+                folderCategoryAct.toolbar.getMenu().clear();
+                folderCategoryAct.toolbar.inflateMenu(R.menu.menu_folder_long_clicked);
+
+                return true;
+            case R.id.action_arranging_floder_category:
+                DebugUtil.showToast(folderCategoryAct, "정렬하기");
+                return true;
+            case R.id.action_concealing:
+                DebugUtil.showToast(folderCategoryAct, "숨기기");
+                return true;
+
+            //long Clicked
+            case R.id.action_sharing:
+                DebugUtil.showToast(folderCategoryAct, "공유하기");
+                return true;
+            case R.id.action_delete:
+                DebugUtil.showToast(folderCategoryAct, "삭제하기");
+                if (imagesInFolder != null && imagesInFolder.size() > 0) {
+                    int removedCount = 0;
+                    for (int i = imagesInFolder.size() - 1 ; i >= 0 ; i--) {
+                        if (selectedPositionsList.contains(i)) {
+                            removedCount++;
+                            DebugUtil.showDebug("deleting Process, selectedPositions : " + selectedPositions.toString());
+                            DebugUtil.showDebug("deleting Process, removedCount : " + removedCount);
+                            selectedPositions.remove(i);
+                            DebugUtil.showDebug("deleting Process, 삭제 이전 : imagesInFolder.get(i).path : " + imagesInFolder.get(i).getPath());
+                            FileUtil.removeDir(imagesInFolder.get(i).getPath());
+                            imagesInFolder.remove(i);
+
+                        }
+                    }
+
+                    //UI refresh 임시방안
+                    selectedPositionsList.addAll(selectedPositions);
+                    imageAdapter.notifyDataSetChanged();
+                    imageAdapter = new CategoryImageAdapter(folderCategoryAct, imagesInFolder);
+                    gridViewCategoryFrag.setAdapter(imageAdapter);
+                    DebugUtil.showToast(folderCategoryAct, "지워진 개수 : " + removedCount);
+                    for (int i = 0 ; i < imagesInFolder.size() ; i++) {
+                        DebugUtil.showDebug("deleting Process, 삭제 이후 : imagesInFolder.get("+ i +").path : " + FileUtil.getFileNameFromPath(imagesInFolder.get(i).getPath()));
+                    }
+                }
+                return true;
+            case R.id.action_detail:
+                DebugUtil.showToast(folderCategoryAct, "세부정보보기");
+
+                return true;
+            case R.id.action_rotation:
+                return true;
+
+            case R.id.action_rotation_left90:
+                DebugUtil.showToast(folderCategoryAct, "왼쪽 90도 회전하기");
+                if (imagesInFolder != null && imagesInFolder.size() > 0) {
+                    for (int i = 0; i < imagesInFolder.size(); i++) {
+                        if (selectedPositionsList.contains(i)) {
+                            final String path = imageAdapter.getItem(i).getPath();
+                            DebugUtil.showDebug("i : " + i + ", path: " + path);
+                            Bitmap bitmap = BitmapFactory.decodeFile(imageAdapter.getItem(i).getPath());
+                            ImageUtil.SaveBitmapToFileCache(ImageUtil.GetRotatedBitmap(bitmap, 270), imageAdapter.getItem(i).getParentPath() + "/" + FileUtil.getFileNameFromPath(path));
+
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    DebugUtil.showDebug("회전 완료");
+                                    //임시방안
+                                    imageAdapter = new CategoryImageAdapter(folderCategoryAct, imagesInFolder);
+                                    gridViewCategoryFrag.setAdapter(imageAdapter);
+                                    //해결 중인 방안
+////                                    imageAdapter.setItems(imagesInFolder);
+//                                    imageAdapter.onUiRefresh();
+////                                    imageAdapter.notifyDataSetChanged();
+                                }
+                            }, 1000);
+
+//                            getActivity().runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    imageAdapter.onUiRefresh();
+//                                }
+//                            });
+
+//                            imageAdapter.setItems(imagesInFolder);
+                        }
+                    }
+                }
+                return true;
+
+            case R.id.action_rotation_right90:
+                DebugUtil.showToast(folderCategoryAct, "오른쪽 90도 회전하기");
+                if (imagesInFolder != null && imagesInFolder.size() > 0) {
+                    for (int i = 0; i < imagesInFolder.size(); i++) {
+                        if (selectedPositionsList.contains(i)) {
+                            final String path = imageAdapter.getItem(i).getPath();
+                            DebugUtil.showDebug("i : " + i + ", path: " + path);
+                            Bitmap bitmap = BitmapFactory.decodeFile(imageAdapter.getItem(i).getPath());
+                            ImageUtil.SaveBitmapToFileCache(ImageUtil.GetRotatedBitmap(bitmap, 90), imageAdapter.getItem(i).getParentPath() + "/" + FileUtil.getFileNameFromPath(path));
+
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    DebugUtil.showDebug("회전 완료");
+                                    //임시방안
+                                    imageAdapter = new CategoryImageAdapter(folderCategoryAct, imagesInFolder);
+                                    gridViewCategoryFrag.setAdapter(imageAdapter);
+                                    //해결 중인 방안
+////                                    imageAdapter.setItems(imagesInFolder);
+//                                    imageAdapter.onUiRefresh();
+////                                    imageAdapter.notifyDataSetChanged();
+                                }
+                            }, 1000);
+
+//                            getActivity().runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    imageAdapter.onUiRefresh();
+//                                }
+//                            });
+
+//                            imageAdapter.setItems(imagesInFolder);
+                        }
+                    }
+                }
+                return true;
+
+
+            case R.id.action_rotation_180:
+                DebugUtil.showToast(folderCategoryAct, "180도 회전하기");
+                if (imagesInFolder != null && imagesInFolder.size() > 0) {
+                    for (int i = 0; i < imagesInFolder.size(); i++) {
+                        if (selectedPositionsList.contains(i)) {
+                            final String path = imageAdapter.getItem(i).getPath();
+                            DebugUtil.showDebug("i : " + i + ", path: " + path);
+                            Bitmap bitmap = BitmapFactory.decodeFile(imageAdapter.getItem(i).getPath());
+                            ImageUtil.SaveBitmapToFileCache(ImageUtil.GetRotatedBitmap(bitmap, 180), imageAdapter.getItem(i).getParentPath() + "/" + FileUtil.getFileNameFromPath(path));
+
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    DebugUtil.showDebug("회전 완료");
+                                    //임시방안
+                                    imageAdapter = new CategoryImageAdapter(folderCategoryAct, imagesInFolder);
+                                    gridViewCategoryFrag.setAdapter(imageAdapter);
+                                    //해결 중인 방안
+////                                    imageAdapter.setItems(imagesInFolder);
+//                                    imageAdapter.onUiRefresh();
+////                                    imageAdapter.notifyDataSetChanged();
+                                }
+                            }, 1000);
+
+//                            getActivity().runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    imageAdapter.onUiRefresh();
+//                                }
+//                            });
+
+//                            imageAdapter.setItems(imagesInFolder);
+                        }
+                    }
+                }
+                return true;
+            case R.id.action_moving:
+                DebugUtil.showToast(folderCategoryAct, "이동하기");
+
+                if (imagesInFolder != null && imagesInFolder.size() > 0) {
+                    for (int i = 0; i < imagesInFolder.size(); i++) {
+                        if (selectedPositionsList.contains(i)) {
+                            final String currentPath = imageAdapter.getItem(i).getPath();
+                            DebugUtil.showDebug("i : " + i + ", currentPath: " + currentPath);
+                            FileUtil.moveFile(currentPath, MainAct.root + "/new");
+
+                            imagesInFolder.remove(i);
+                        }
+                    }
+                }
+
+                //임시방안
+                imageAdapter = new CategoryImageAdapter(folderCategoryAct, imagesInFolder);
+                gridViewCategoryFrag.setAdapter(imageAdapter);
+
+                return true;
+            case R.id.action_copying:
+                DebugUtil.showToast(folderCategoryAct, "복사하기");
+
+                if (imagesInFolder != null && imagesInFolder.size() > 0) {
+                    for (int i = 0; i < imagesInFolder.size(); i++) {
+                        if (selectedPositionsList.contains(i)) {
+                            final String currentPath = imageAdapter.getItem(i).getPath();
+                            DebugUtil.showDebug("i : " + i + ", currentPath: " + currentPath);
+//                            FileUtil.fileCopy(currentPath, MainAct.root + "/new/"+FileUtil.getFileNameFromPath(currentPath));
+                            FileUtil.copyFile(currentPath, MainAct.root + "/new/"+FileUtil.getFileNameFromPath(currentPath));
+                        }
+                    }
+                }
+
+                //임시방안
+                imageAdapter = new CategoryImageAdapter(folderCategoryAct, imagesInFolder);
+                gridViewCategoryFrag.setAdapter(imageAdapter);
+
+                return true;
+            case R.id.action_renaming:
+                DebugUtil.showToast(folderCategoryAct, "이름바꾸기");
+                return true;
+            case R.id.action_viewing_in_map:
+                DebugUtil.showToast(folderCategoryAct, "지도에서 위치보기");
+                return true;
+            default:
+                break;
+        }
+        return false;
+    }
+
+    @Override
+    public void onBackPressed() {
+        DebugUtil.showDebug("CategoryFrag, onBackPressed");
+        if (CategoryFrag.isLongClicked) {
+            CategoryFrag.isLongClicked = false;
+
+            //체크 해제
+            for (ViewItem viewItem : imagesInFolder) {
+                viewItem.setIsChecked(false);
+            }
+            selectedPositions.clear();
+            imageAdapter.notifyDataSetChanged();
+
+            //FolderCategory 액티비티의 메뉴를 변경해야한다
+            folderCategoryAct.toolbar.getMenu().clear();
+            folderCategoryAct.toolbar.inflateMenu(R.menu.menu_category);
+
+        } else {
+            folderCategoryAct.finish();
+        }
+    }
+
+    /**
+     * 이미지 어댑터
+     */
+    public class CategoryImageAdapter extends BaseAdapter {
+
+        public List<ViewItem> items;
+        public LayoutInflater inflater;
+        public DisplayImageOptions options;
+        public ImageLoaderConfiguration config;
+
+        CategoryImageAdapter(Context context, List<ViewItem> items) {
+            inflater = LayoutInflater.from(context);
+            this.items = items;
+
+            /**info : https://github.com/nostra13/Android-Universal-Image-Loader/wiki/Useful-Info
+             http://m.blog.naver.com/d_onepiece/100210301983
+             http://d2.naver.com/helloworld/429368 */
+
+            options = new DisplayImageOptions.Builder()
+                    .showImageOnLoading(R.drawable.ic_stub) //로딩 전 이미지
+//                    .resetViewBeforeLoading(true)
+                    .showImageForEmptyUri(R.drawable.ic_empty)
+                    .showImageOnFail(R.drawable.ic_error)
+                    .cacheInMemory(false)
+//                    .cacheOnDisc(false) //deprecated
+                    .cacheOnDisk(false)
+                    .considerExifParams(true)
+                    .bitmapConfig(Bitmap.Config.RGB_565)
+                    .imageScaleType(ImageScaleType.EXACTLY)
+                    .displayer(new FadeInBitmapDisplayer(300))
+                    .build();
+
+            config = new ImageLoaderConfiguration.Builder(mContext)
+                    .threadPriority(Thread.NORM_PRIORITY - 2)
+//                    .tasksProcessingOrder(QueueProcessingType.LIFO)
+                    .tasksProcessingOrder(QueueProcessingType.FIFO)
+                    .denyCacheImageMultipleSizesInMemory()
+                    .defaultDisplayImageOptions(options)
+                    .threadPoolSize(10)
+                    .discCacheFileNameGenerator(new Md5FileNameGenerator())
+                    .diskCacheExtraOptions(480, 320, null)
+//                    .writeDebugLogs() // Remove for release app
+                    .build();
+
+            imageLoader.init(config);
+        }
+
+        public void setItems(List<ViewItem> items) {
+            DebugUtil.showDebug("setItems() in imageAdapter");
+            this.items = items;
+//            imageLoader.init(config);
+            notifyDataSetChanged();
+        }
+
+//        public void onUiRefresh() {
+////            imageLoader.init(config);
+////            if (!imageLoader.isInited())
+//            imageLoader.destroy();
+//
+//            options = new DisplayImageOptions.Builder()
+//                    .showImageOnLoading(R.drawable.ic_stub) //로딩 전 이미지
+////                    .resetViewBeforeLoading(true)
+//                    .showImageForEmptyUri(R.drawable.ic_empty)
+//                    .showImageOnFail(R.drawable.ic_error)
+//                    .cacheInMemory(false)
+////                    .cacheOnDisc(false)
+//                    .cacheOnDisk(false) //true : 그리드뷰에서 회전 시 결과에 반영 됨에 염두할 것
+//                    .considerExifParams(true)
+//                    .bitmapConfig(Bitmap.Config.RGB_565)
+//                    .imageScaleType(ImageScaleType.EXACTLY)
+//                    .displayer(new FadeInBitmapDisplayer(300))
+//                    .build();
+//
+//            config = new ImageLoaderConfiguration.Builder(mContext)
+//                    .threadPriority(Thread.NORM_PRIORITY - 2)
+////                    .tasksProcessingOrder(QueueProcessingType.LIFO)
+//                    .tasksProcessingOrder(QueueProcessingType.FIFO)
+//                    .denyCacheImageMultipleSizesInMemory()
+//                    .defaultDisplayImageOptions(options)
+//                    .threadPoolSize(10)
+//                    .discCacheFileNameGenerator(new Md5FileNameGenerator())
+//                    .diskCacheExtraOptions(480, 320, null)
+////                    .writeDebugLogs() // Remove for release app
+//                    .build();
+//
+//            imageLoader.init(config);
+//            notifyDataSetChanged();
+//        }
+
+        @Override
+        public int getCount() {
+            if(items != null)
+                return items.size();
+            else
+                return 0;
+        }
+
+        @Override
+        public ViewItem getItem(int position) {
+            if (items != null && items.size() > position) {
+                return items.get(position);
+            } else
+                return null;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public View getView(final int position, View convertView, ViewGroup parent) {
+
+            DebugUtil.showDebug("getView() in imageAdapter" + items.get(position).getPath());
+
+            final ViewHolder holder;
+            if (convertView == null) {
+                view = inflater.inflate(R.layout.item_list_image, null);
+                holder = new ViewHolder();
+                holder.image = (ImageView) view.findViewById(R.id.image);
+                holder.checkBoxItemList = (CheckBox) view.findViewById(R.id.checkBox_item_list_image);
+
+                view.setTag(holder);
+            } else {
+                view = convertView;
+                holder = (ViewHolder) view.getTag();
+            }
+
+            //체크박스 초기화(Visibility)
+            holder.checkBoxItemList.setVisibility(View.GONE);
+            if (CategoryFrag.isLongClicked) {
+                holder.checkBoxItemList.setVisibility(View.VISIBLE);
+            }
+            //체크박스 체크 초기화
+            if (getItem(position).getIsChecked()) {
+                holder.checkBoxItemList.setChecked(true);
+            } else {
+                holder.checkBoxItemList.setChecked(false);
+            }
+
+            //개별 이미지 클릭 리스너
+            holder.image.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    DebugUtil.showDebug("FolderFrag, ImageAdapter, getView, onClick() selected position : " + position);
+                    /** 갤러리 액티비티(개별 사진 보는 화면) 이동*/
+                    folderCategoryAct.goToGalleryAct(items, position);
+                }
+            });
+
+            //개별 이미지 롱클릭 리스너
+            holder.image.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    DebugUtil.showDebug("FolderFrag, ImageAdapter, getView, onLongClick() ");
+                    CategoryFrag.isLongClicked = true;
+                    //어댑터 갱신을 통해 화면에 체크박스가 나타나도록 함
+                    notifyDataSetChanged();
+
+                    //FolderCategory 액티비티의 메뉴를 변경해야한다
+                    folderCategoryAct.toolbar.getMenu().clear();
+                    folderCategoryAct.toolbar.inflateMenu(R.menu.menu_folder_long_clicked);
+
+                    return false;
+                }
+            });
+
+            //체크박스 클릭 리스너
+            holder.checkBoxItemList.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    switch (v.getId()) {
+                        //체크박스에 대해서
+                        case R.id.checkBox_item_list_image:
+                            DebugUtil.showDebug("getItem(" + position + ").isChecked : " + getItem(position).getIsChecked());
+                            if (getItem(position).getIsChecked()) { //원래 항목이 체크 상태였다면 체크해제 상태로 변경
+                                selectedPositions.remove(position);
+                                getItem(position).setIsChecked(false);
+                                DebugUtil.showDebug("getItem(" + position + ").isChecked became: false!!");
+                            } else {
+                                selectedPositions.add(position);//원래 항목이 체크 해제 상태였다면 체크상태로 변경
+                                getItem(position).setIsChecked(true);
+                                DebugUtil.showDebug("getItem(" + position + ").isChecked became: true!!");
+                            }
+
+                            //selectedPosition : 선택 된 것들의 position을 가진 집합
+                            DebugUtil.showDebug("selectedPosition : " + selectedPositions.toString());
+
+                            //sortedSelectedPositons : 집합을 정렬하여 생성한 리스트
+                            List<Integer> sortedSelectedPositons = new ArrayList<>();
+                            sortedSelectedPositons.addAll(selectedPositions);
+                            Collections.sort(sortedSelectedPositons);
+                            selectedPositionsList = sortedSelectedPositons;
+                            DebugUtil.showDebug("selectedPositionsList : " + selectedPositionsList.toString());
+
+                            break;
+                    }
+                }
+            });
+
+            holder.image.setImageBitmap(null);
+            //"Universal Image Loader" 라이브러리 사용
+            if (!TextUtil.isNull(getItem(position).getPath())) {
+                imageLoader.clearMemoryCache();
+                imageLoader.clearDiskCache();
+//                DebugUtil.showDebug("" + getItem(position).path);
+//                imageLoader.cancelDisplayTask(holder.image);
+                if(getItem(position).isDirectory()) {
+                    DebugUtil.showDebug("FolderFrag, ImageAdapter, getView(), getItem(position).isDirectory == true");
+                    imageLoader.displayImage("drawable://" + R.drawable.act_main_image_default, holder.image);
+                } else {
+                    imageLoader.displayImage("file://" + getItem(position).getPath(), holder.image, new ImageLoadingListener() {
+                        @Override
+                        public void onLoadingStarted(String imageUri, View view) {
+                            DebugUtil.showDebug("onLoadingStarted");
+                        }
+
+                        @Override
+                        public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
+                            DebugUtil.showDebug("onLoadingFailed");
+
+                        }
+
+                        @Override
+                        public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                            DebugUtil.showDebug("onLoadingComplete " + imageUri);
+                        }
+
+                        @Override
+                        public void onLoadingCancelled(String imageUri, View view) {
+                            DebugUtil.showDebug("onLoadingCancelled " + imageUri);
+                        }
+                    });
+                }
+
+            }
+
+            //"Picasso" 라이브러리 사용 <- 느림
+//            Picasso.with(folderCategoryAct).load("file://" + getItem(position).path).rotate(270).into(holder.image);
+
+            return view;
+        }
+    }
+
+    static class ViewHolder {
+        static ImageView image;
+        CheckBox checkBoxItemList;
+    }
+
+
+}

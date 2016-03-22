@@ -1,0 +1,29 @@
+package kr.ac.korea;
+
+import android.app.Application;
+
+import kr.ac.korea.intelligentgallery.util.DebugUtil;
+
+/**
+ * Created by preparkha on 15. 6. 15..
+ */
+public class IntelligentGallery extends Application {
+
+    private static IntelligentGallery context;
+
+    public IntelligentGallery() {
+        super();
+        this.context = this;
+    }
+
+    public static IntelligentGallery getContext() {
+        return context;
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        DebugUtil.showDebug("KorThaiDicApplication onCreate()");
+    }
+
+}

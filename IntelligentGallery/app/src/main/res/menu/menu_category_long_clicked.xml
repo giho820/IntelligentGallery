@@ -1,0 +1,57 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="kr.ac.korea.intelligentgallery.act.FolderCategoryAct"
+    >
+
+    <item
+        android:id="@+id/action_select_mode"
+        android:orderInCategory="100"
+        android:title="@string/action_delete"
+        android:icon="@drawable/ic_menu_trash"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_sharing"
+        android:orderInCategory="100"
+        android:title="@string/action_sharing"
+        android:icon="@drawable/ic_menu_sharing"
+        app:showAsAction="always" />
+
+
+
+    <item
+        android:id="@+id/action_arranging_floder_category"
+        android:orderInCategory="100"
+        android:title="@string/action_detail"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_rotation"
+        android:orderInCategory="100"
+        android:title="@string/action_rotation"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_moving"
+        android:orderInCategory="100"
+        android:title="@string/action_moving"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_copying"
+        android:orderInCategory="100"
+        android:title="@string/action_copying"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_renaming"
+        android:orderInCategory="100"
+        android:title="@string/action_renaming"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_viewing_in_map"
+        android:orderInCategory="100"
+        android:title="@string/action_viewing_in_map"
+        app:showAsAction="never" />
+</menu>

@@ -1,0 +1,281 @@
+package kr.ac.korea.intelligentgallery.act;
+
+
+import android.graphics.Color;
+import android.os.Build;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.View;
+
+import java.util.List;
+
+import kr.ac.korea.astuetz.PagerSlidingTabStrip;
+import kr.ac.korea.intelligentgallery.R;
+import kr.ac.korea.intelligentgallery.common.ParentAct;
+import kr.ac.korea.intelligentgallery.data.ViewItem;
+import kr.ac.korea.intelligentgallery.fragment.CategoryFrag;
+import kr.ac.korea.intelligentgallery.fragment.FolderFrag;
+import kr.ac.korea.intelligentgallery.listener.OnBackPressedListener;
+import kr.ac.korea.intelligentgallery.util.DebugUtil;
+import kr.ac.korea.intelligentgallery.util.FileUtil;
+import kr.ac.korea.intelligentgallery.util.TextUtil;
+
+/**
+ * FolderCategoryAct : MainAct에서 폴더를 선택하였을 때 실행되는 Activity
+ * 두 개의 탭을 가진 ViewPager로 구성되어있으며 각각은 FolderFrag와 CategoryFrag이다
+ */
+public class FolderCategoryAct extends ParentAct implements View.OnClickListener {
+
+    public Toolbar toolbar;
+//    private MaterialMenuView materialMenuView;
+    private PagerSlidingTabStrip pagerSlidingTabStrip;
+    private ViewPager viewPagerMain;
+    private MainPagerAdapter mainPagerAdapter;
+
+    private FolderFrag folderFrag;
+    private CategoryFrag categoryFrag;
+    public List<ViewItem> imagesInFolder = null;
+
+    String pathFromMainAct;
+    int cIdFromMainAct = -1;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_folder_category);
+
+        //MainAct에서 클릭한 폴더의 경로 받아옴
+        pathFromMainAct = getIntent().getStringExtra("path");
+        DebugUtil.showDebug("FolderCategoryAct, onCreate(), received path : " + pathFromMainAct);
+        //받아온 경로를 통해서 하위 항목들의 ViewItem 객체를 생성함
+        if (!TextUtil.isNull(pathFromMainAct)) {
+            DebugUtil.showDebug("FolderCategoryAct, onCreate(), root path is " + pathFromMainAct);
+            imagesInFolder = FileUtil.createViewItems(pathFromMainAct);
+        } else {
+            DebugUtil.showDebug("FolderCategoryAct, onCreate(), root path is null");
+        }
+
+        //MainAct에서 클릭한 카테고리의 cID를 받아옴
+        cIdFromMainAct = getIntent().getIntExtra("clickedCid", 0);
+        DebugUtil.showDebug("FolderCategoryAct, onCreate(), received cid : " + cIdFromMainAct);
+        //카테고리로부터 받아온 이미지들
+        if (cIdFromMainAct>=0 && TextUtil.isNull(pathFromMainAct)) {
+            DebugUtil.showDebug("FolderCategoryAct, onCreate(), received cid " + cIdFromMainAct);
+        }
+
+        //최상단의 툴바
+        toolbar = (Toolbar) findViewById(R.id.toolbar_folder_category);
+
+        //화면이 하나일때는 이렇게 쓰면된다
+//        toolbar.inflateMenu(R.menu.menu_folder);
+        setSupportActionBar(toolbar);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getWindow().setStatusBarColor(Color.BLACK); //상태바의 색상 변경
+            toolbar.setTitleTextColor(Color.WHITE);
+            toolbar.setNavigationIcon(getDrawable(R.drawable.ic_backkey));
+        } else {
+            //getWindow().setStatusBarColor(Color.BLACK);//21버젼 아래에서는 변경불가
+            toolbar.setTitleTextColor(getResources().getColor(R.color.c_ffffffff));
+            toolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_backkey));
+        }
+
+
+        //pagerAdapter
+        mainPagerAdapter = new MainPagerAdapter(getSupportFragmentManager());
+        //view pager
+        viewPagerMain = (ViewPager) findViewById(R.id.view_pager_flodercategoryfrag);
+        viewPagerMain.setAdapter(mainPagerAdapter);
+        viewPagerMain.setOffscreenPageLimit(2);//2개까지는 지워지지 않도록 함
+
+        //pagerSlidingTabStrip, 뷰페이저 위에 뷰페이저를 식별해주는 탭
+        pagerSlidingTabStrip = (PagerSlidingTabStrip) findViewById(R.id.pager_sliding_tab_strip_make_event);
+        pagerSlidingTabStrip.setIndicatorHeight(getResources().getDimensionPixelOffset(R.dimen.dp_3));
+        pagerSlidingTabStrip.setIndicatorColor(getResources().getColor(R.color.c_ffffffff));
+        pagerSlidingTabStrip.setTextColorResource(R.color.c_ffffffff);
+        pagerSlidingTabStrip.setShouldExpand(true);
+        pagerSlidingTabStrip.setDividerColor(getResources().getColor(android.R.color.transparent));
+        pagerSlidingTabStrip.setViewPager(viewPagerMain);
+        //페이지가 슬라이딩 될 때와 관련된 이벤트처리
+        pagerSlidingTabStrip.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                DebugUtil.showDebug("FolderCategoryAct, pagerSlidingTabStrip, onPageSelected() postion : " + position);
+                switch (position) {
+                    //폴더 탭 선택 시
+                    case 0:
+                        //메인에서 받아온 폴더이름 표시
+                        if(!TextUtil.isNull(pathFromMainAct)) {
+                            toolbar.setTitle(FileUtil.getFileNameFromPath(pathFromMainAct));
+                        } else {
+                            toolbar.setTitle("" + cIdFromMainAct);
+                        }
+                        break;
+                    //카테고리 탭 선택 시
+                    case 1:
+                        toolbar.setTitle("" + cIdFromMainAct);
+                        break;
+                    default:
+                        if(!TextUtil.isNull(pathFromMainAct))
+                            toolbar.setTitle(FileUtil.getFileNameFromPath(pathFromMainAct));
+                        else if(cIdFromMainAct >=0) {
+                            toolbar.setTitle("" + cIdFromMainAct);
+                        }
+
+                        break;
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+            }
+        });
+    }
+
+    /**
+     * tab PagerAdapter
+     */
+    public class MainPagerAdapter extends FragmentStatePagerAdapter {
+
+        private String[] titleArray = {
+                "사진", "카테고리"
+        };
+
+        public MainPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            if (position == 0)
+                return titleArray[0];
+            else
+                return titleArray[1];
+        }
+
+        @Override
+        public int getCount() {
+            return titleArray.length;
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            Fragment returnFrag = new Fragment();
+            switch (position) {
+                case 0:
+                    // FolderCategoryFrag
+                    if(!TextUtil.isNull(pathFromMainAct)) {
+                        toolbar.setTitle(FileUtil.getFileNameFromPath(pathFromMainAct));
+                        return folderFrag = new FolderFrag(pathFromMainAct);
+                    } else return categoryFrag = new CategoryFrag(cIdFromMainAct);
+                    /** FolderFrag 이동 */
+                case 1:
+                    // CategoryFrag
+//                    toolbar.setTitle("카테고리 상위폴더");
+                    /** CategoryFrag 이동 */
+                    return categoryFrag = new CategoryFrag(cIdFromMainAct);
+                default: {
+
+                    if(!TextUtil.isNull(pathFromMainAct)) {
+                        // FolderCategoryFrag
+                        toolbar.setTitle(FileUtil.getFileNameFromPath(pathFromMainAct));
+                        returnFrag = new FolderFrag(pathFromMainAct);
+
+                    }
+                    else if(cIdFromMainAct >=0) {
+                        toolbar.setTitle("" + cIdFromMainAct);
+                        returnFrag = new CategoryFrag(cIdFromMainAct);
+                    }
+                }
+
+            }
+            return returnFrag;
+        }
+
+        @Override
+        public int getItemPosition(Object object) {
+
+            int position;
+
+            if (object instanceof FolderFrag) {
+                position = 0;
+            } else
+                position = 1;
+            return position;
+        }
+
+    }
+
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        DebugUtil.showDebug("FolderCategoryAct, onCreateOptionsMenu() : ");
+        MenuInflater inflater = getMenuInflater();
+        if (FolderFrag.isLongClicked ) {
+            if(!CategoryFrag.isLongClicked)
+                inflater.inflate(R.menu.menu_folder_long_clicked, menu);
+            else
+                inflater.inflate(R.menu.menu_folder, menu);
+        }
+        if(!FolderFrag.isLongClicked) {
+            if(!CategoryFrag.isLongClicked)
+                inflater.inflate(R.menu.menu_category, menu);
+            else
+                inflater.inflate(R.menu.menu_category_long_clicked, menu);
+        }
+
+
+
+        return true;
+    }
+
+    /**
+     * 안드로이드 기기의 뒤로가기 버튼
+     */
+    @Override
+    public void onBackPressed() {
+        this.overridePendingTransition(0, 0); //에니메이션 없앰
+
+        DebugUtil.showDebug("FolderCategoryAct, onBackPressed()");
+        List<Fragment> fragments = getSupportFragmentManager().getFragments();
+
+        if (fragments != null) {
+            for (Fragment fragment : fragments) {
+                if (fragment instanceof OnBackPressedListener) {
+                    if (FolderFrag.isLongClicked) {
+                        ((OnBackPressedListener) fragment).onBackPressed();
+                    } else {
+                        super.onBackPressed();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 네이게이션 버튼에 대한 동작
+     */
+    @Override
+    public void onClick(View v) {
+        DebugUtil.showDebug("FolderCategoryFrag, onClick(), v.getId() :" + v.getId());
+        switch (v.getId()) {
+            case R.drawable.ic_backkey:
+                onBackPressed();
+                break;
+        }
+    }
+
+
+
+}

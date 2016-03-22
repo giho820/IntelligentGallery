@@ -1,0 +1,170 @@
+package kr.ac.korea.intelligentgallery.adapter;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.CheckBox;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+
+import java.util.List;
+
+import kr.ac.korea.intelligentgallery.R;
+import kr.ac.korea.intelligentgallery.act.MainAct;
+import kr.ac.korea.intelligentgallery.data.ViewItem;
+import kr.ac.korea.intelligentgallery.listener.ViewItemListener;
+import kr.ac.korea.intelligentgallery.util.DebugUtil;
+import kr.ac.korea.intelligentgallery.util.FileUtil;
+import kr.ac.korea.intelligentgallery.util.TextUtil;
+
+/**
+ * Created by kiho on 2015. 12. 10..
+ */
+public class ViewItemAdapter extends BaseAdapter {
+
+    private Context mContext;
+    private List<ViewItem> items;
+    private ViewItemListener mViewItemListener;
+
+    public ViewItemAdapter(Context context, List<ViewItem> items) {
+        this.mContext = context;
+        this.items = items;
+    }
+
+    // View lookup cache
+    public class ViewHolder {
+        public ImageView folderThumbnail;
+        public CheckBox checkBox;
+        public TextView folder_name;
+        public TextView file_count;
+        public LinearLayout item_list_info;
+    }
+
+    @Override
+    public int getCount() {
+
+        return items.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        if (items != null && items.size() > position)
+            return items.get(position);
+        else
+            return null;
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
+    public View getView(final int position, View convertView, ViewGroup parent) {
+//        DebugUtil.showDebug("ViewItemAdapter, getView()");
+
+        final ViewHolder viewHolder;
+        if (convertView == null) {
+
+            LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            convertView = inflater.inflate(R.layout.item_list_folder, null);
+
+            viewHolder = new ViewHolder();
+            viewHolder.folderThumbnail = (ImageView) convertView.findViewById(R.id.imageView_folder_thumbnail);
+            viewHolder.checkBox = (CheckBox) convertView.findViewById(R.id.item_list_checkbox);
+            viewHolder.folder_name = (TextView) convertView.findViewById(R.id.item_list_folder_name);
+            viewHolder.file_count = (TextView) convertView.findViewById(R.id.item_list_file_count);
+            viewHolder.item_list_info = (LinearLayout) convertView.findViewById(R.id.item_list_info);
+
+            convertView.setTag(viewHolder);
+
+        } else {
+            viewHolder = (ViewHolder) convertView.getTag();
+        }
+
+        final ViewItem item = items.get(position);
+
+        DebugUtil.showDebug("ViewItemAdapter, item.isDirectory : " + item.isDirectory());
+
+        if (item.isDirectory()) {
+
+            //파일 및 폴더명 표시
+            viewHolder.item_list_info.setVisibility(View.VISIBLE);
+            viewHolder.folder_name.setText("");
+            if (!TextUtil.isNull(item.getName())) {
+                viewHolder.folder_name.setText(item.getName());
+            }
+            //카테고리명 표시
+            else if(!TextUtil.isNull(item.getCategoryName())) {
+                viewHolder.folder_name.setText(item.getCategoryName());
+            }
+
+            viewHolder.file_count.setText("");
+            //파일 및 폴더의 하위 항목 개수 표시
+            if (item.getPath() != null) {
+                int numItemsInsideItem = FileUtil.itemsCountInsidePath(item.getPath());
+                viewHolder.file_count.setText("" + numItemsInsideItem);
+            }
+            //카테고리 하위 항목 개수 표시
+            else if(item.getPath() == null) {
+                int numItemsInsideClickedCId = FileUtil.itemsCountInsideCategory(item.getCategoryId());
+                viewHolder.file_count.setText(""+numItemsInsideClickedCId);
+            }
+
+            //폴더의 썸네일 표시
+            ImageLoader.getInstance().init(ImageLoaderConfiguration.createDefault(mContext));
+            ImageLoader.getInstance().displayImage("file:///" + item.getRecentImageFile(), viewHolder.folderThumbnail);
+
+        } else {
+            //이미지 파일인 경우
+            viewHolder.item_list_info.setVisibility(View.GONE);
+
+//            ImageLoader.getInstance().init(ImageLoaderConfiguration.createDefault(mContext));
+//            ImageLoader.getInstance().displayImage("file:///" + item.getPath(), viewHolder.folderThumbnail);
+        }
+
+        //체크박스 초기화
+        viewHolder.checkBox.setChecked(false);
+        viewHolder.checkBox.setVisibility(View.GONE);
+
+        if (MainAct.longClicked) {
+            viewHolder.checkBox.setVisibility(View.VISIBLE);
+
+            if (item.getIsChecked()) {
+                viewHolder.checkBox.setChecked(true);
+            } else {
+                viewHolder.checkBox.setChecked(false);
+            }
+        }
+        viewHolder.checkBox.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DebugUtil.showDebug("position : " + position);
+                DebugUtil.showDebug("true or false : " + viewHolder.checkBox.isChecked());
+                item.setIsChecked(viewHolder.checkBox.isChecked());
+            }
+        });
+
+        return convertView;
+    }
+
+    public void addItem(ViewItem item) {
+
+        if (item == null) {
+            return;
+        }
+        if (this.items != null) {
+            this.items.add(items.size() - 1, item);
+            DebugUtil.showDebug("ViewItemAdapter, addItem(), " + item.getPath() + " added");
+
+        }
+    }
+
+
+}

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:theme="@style/AppTheme"
+    tools:context=".act.FolderCategoryAct">
+
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_52"
+        android:background="@drawable/act_main_toolbar"
+        >
+
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar_folder_category"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dp_52"
+            app:popupTheme="@style/AppTheme.PopupOverlay"
+            app:theme="@style/AppTheme.AppBarOverlay"></android.support.v7.widget.Toolbar>
+    </FrameLayout>
+
+
+    <kr.ac.korea.astuetz.PagerSlidingTabStrip
+        android:id="@+id/pager_sliding_tab_strip_make_event"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_48"
+        android:background="@drawable/act_main_toolbar" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorMajor">
+
+        <android.support.v4.view.ViewPager
+            android:id="@+id/view_pager_flodercategoryfrag"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </FrameLayout>
+
+
+
+</LinearLayout>

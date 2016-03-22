@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/linearlayout_gallery"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:id="@+id/framelayout_toolbar_gallery"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_52"
+        android:background="@drawable/act_main_toolbar"
+        >
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar_gallery"
+            app:popupTheme="@style/AppTheme.PopupOverlay"
+            app:theme="@style/AppTheme.AppBarOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dp_52"
+            ></android.support.v7.widget.Toolbar
+            >
+    </FrameLayout>
+
+    <kr.ac.korea.intelligentgallery.common.ViewPagerFixed xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/pager_activity_gallery"
+        android:background="@color/colorMajor"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!--<ImageView-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:id="@+id/imageView_gallery"-->
+    <!--android:visibility="gone"-->
+    <!--/>-->
+
+    <!--<ProgressBar-->
+    <!--android:id="@+id/progress"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:indeterminate="false"-->
+    <!--android:max="100"-->
+    <!--android:layout_gravity="bottom"-->
+    <!--style="@style/ProgressBarStyle" />-->
+    <!-- -->
+    <!--<Button-->
+    <!--android:id="@+id/btn_rot"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:text="90도 회전"-->
+    <!--android:visibility="gone"/>-->
+
+    <!--<uk.co.senab.photoview.PhotoView-->
+    <!--android:id="@+id/iv_photo"-->
+    <!--android:layout_width="fill_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:visibility="gone"/>-->
+
+
+</LinearLayout>

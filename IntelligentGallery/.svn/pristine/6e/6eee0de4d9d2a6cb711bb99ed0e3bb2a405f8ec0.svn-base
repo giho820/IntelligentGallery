@@ -1,0 +1,37 @@
+package com.example.dilab.sampledilabapplication.Sample.Ranker;
+
+
+import com.example.dilab.sampledilabapplication.Sample.Models.SampleContentScoreData;
+import com.example.dilab.sampledilabapplication.Sample.Models.SampleScoreData;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
+
+public class SampleSemanticRanker {
+
+    public boolean isInit = false;
+    public int[] temp_documentIDs = {1, 2, 3, 4, 5};
+
+    public boolean init(String dbPath){
+        isInit = true;
+        return true;
+    }
+
+    public ArrayList<SampleContentScoreData> getRelevantContents(ArrayList<SampleScoreData> categories, int topK){
+        if(!isInit){
+            System.exit(0);
+        }
+        ArrayList<SampleContentScoreData> temp_results = new ArrayList<SampleContentScoreData>();
+        Random generator = new Random();
+        for (int i = 0; i < topK; i++){
+            SampleContentScoreData temp_contentScoreData = new SampleContentScoreData(temp_documentIDs[i]);
+            temp_contentScoreData.setGraphScore(generator.nextDouble() * .99);
+            temp_contentScoreData.calculateFinalScores(1.0);
+            temp_results.add(i, temp_contentScoreData);
+        }
+        Collections.sort(temp_results);
+
+        return temp_results;
+    }
+}

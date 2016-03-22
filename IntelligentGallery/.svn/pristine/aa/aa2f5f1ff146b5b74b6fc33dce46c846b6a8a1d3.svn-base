@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="colorBlack">#000000</color>
+    <color name="colorGray">#646464</color>
+    <color name="colorLigntGray">#c7c7c7</color>
+
+    <color name="c_ffffffff">#ffffffff</color>
+    <color name="c_ffff4d4d">#ffff4d4d</color>
+
+    <color name="c_fff5f5f5">#fff5f5f5</color>
+
+    <color name="c_ff00c1bd">#ff00c1bd</color>
+    <color name="c_ff004948">#ff004948</color>
+
+    <color name="c_ffefefef">#ffefefef</color>
+    <color name="c_ffeeeeee">#ffeeeeee</color>
+    <color name="c_ffd5d5d5">#ffd5d5d5</color>
+    <color name="c_ff9b9b9b">#ff9b9b9b</color>
+    <color name="c_ff979797">#ff979797</color>
+    <color name="c_fff9f9f9">#fff9f9f9</color>
+    <color name="c_ffd4d4d4">#ffd4d4d4</color>
+    <color name="c_fffafafa">#fffafafa</color>
+    <color name="c_ff7d7a85">#ff7d7a85</color>
+    <color name="c_ff7b7a85">#ff7b7a85</color>
+
+    <color name="c_ff2e293a">#ff2e293a</color>
+    <color name="c_ff333333">#ff333333</color>
+    <color name="c_ff1b1627">#ff1b1627</color>
+    <color name="c_ff1a1627">#ff1a1627</color>
+    <color name="c_de000000">#de000000</color>
+    <color name="c_ff000000">#ff000000</color>
+    <color name="c_4d000000">#4d000000</color>
+    <color name="c_ff4d4d4d">#ff4d4d4d</color>
+
+    <color name="colorMajor">#202332</color>
+    <color name="colorMajorText">#cecece</color>
+    <color name="colorTabNormal">#D5CDF4</color>
+</resources>

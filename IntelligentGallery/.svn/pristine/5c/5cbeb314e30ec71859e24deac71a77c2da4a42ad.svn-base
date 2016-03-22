@@ -1,0 +1,400 @@
+package kr.ac.korea.intelligentgallery.util;
+
+import android.content.Context;
+import android.os.Environment;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
+import kr.ac.korea.intelligentgallery.act.MainAct;
+import kr.ac.korea.intelligentgallery.data.ViewItem;
+import kr.ac.korea.intelligentgallery.database.DatabaseCRUD;
+import kr.ac.korea.intelligentgallery.database.DatabaseHelper;
+import kr.ac.korea.intelligentgallery.database.util.DatabaseConstantUtil;
+
+/**
+ * Created by kiho on 2015. 12. 16..
+ */
+public class FileUtil {
+
+    /**
+     * SD카드의 존재 유무에 따라 루트폴더의 경로를 세팅
+     */
+    public static void initDir() {
+        String sdcard = Environment.getExternalStorageState();
+        if (!sdcard.equals(Environment.MEDIA_MOUNTED)) {
+            /** SD카드 UNMOUNTED */
+            //내부저장소의 주소를 얻어옴
+            DebugUtil.showDebug("MainFrag, onCreateView(), sdcard unmounted");
+//            MainAct.root = "" + Environment.getRootDirectory().getAbsolutePath() + MainAct.rootFolderName;
+            MainAct.root = "" + Environment.getRootDirectory().getAbsolutePath(); // 저장소의 최상단 경로를 저장
+//            MainAct.categoryRoot = "" + Environment.getRootDirectory().getAbsolutePath() + MainAct.categoryRootFolderName; //카테고리
+        } else {
+            /** SD카드 MOUNTED */
+            //외부저장소의 주소를 얻어옴
+            DebugUtil.showDebug("MainFrag, onCreateView(), sdcard mounted");
+//            MainAct.root = "" + Environment.getExternalStorageDirectory().getAbsolutePath() + MainAct.rootFolderName;
+//            MainAct.categoryRoot = "" + Environment.getExternalStorageDirectory().getAbsolutePath() + MainAct.categoryRootFolderName; //카테고리
+            MainAct.root = "" + Environment.getExternalStorageDirectory().getAbsolutePath(); // 저장소의 최상단 경로를 저장
+//            MainAct.categoryRoot = "" + Environment.getExternalStoragePublicDirectory(sdcard).getAbsolutePath() + MainAct.categoryRootFolderName; //카테고리
+        }
+
+        DebugUtil.showDebug("FileUtil, initDir(), root dir is => " + MainAct.root);
+//        MainAct.categoryRoot = MainAct.root + MainAct.categoryRootFolderName;
+//        DebugUtil.showDebug("FileUtil, initDir(), category root dir is => " + MainAct.categoryRoot);
+
+//        File rootCheck = new File(MainAct.root);
+//        if (!rootCheck.exists()) { //최상위 루트폴더 미 존재시 생성
+//            rootCheck.mkdir();
+//            DebugUtil.showDebug("MainFrag, onCreateView(),root made");
+//        }
+
+    }
+
+    /**
+     * 특정 디렉토리 경로를 받아 그 디렉토리 하위에 있는 ViewItem List를 생성한다
+     * CreateViewItems르 재귀적으로 호출하여 액티비티 이동없이도 하위 항목에 대한 정보를 표현할 수 있으나,
+     * 개별 항목을 계속 생성하는 구조이기에 많은 사진을 한 액티비티에 표현하기엔 무리가 있어 MainAct의 폴더와 카테고리 최상단 depth에만 적용함
+     *
+     * @param directoryPath, 특정 디렉토리 경로
+     * @return items, 특정 디렉토리 하위 항목들(폴더, 디렉토리)
+     */
+    public static List<ViewItem> createViewItems(String directoryPath) {
+        MainAct.currentPath = directoryPath;
+        DebugUtil.showDebug("FileUtil, createViewItems, MainAct.currentPath = " + directoryPath);
+
+        List<ViewItem> items = new ArrayList<>();
+        // List all the items within the folder
+        File[] files = new File(directoryPath).listFiles(new FileUtil.ImageFileFilter());
+        if (files == null) return items;
+
+        for (File file : files) {
+            // Add the directories containing images or sub-directories
+            if (file.isDirectory() && file.listFiles(new FileUtil.ImageFileFilter()).length > 0) {
+//            if (file.isDirectory()) {
+                items.add(new ViewItem(file.getPath(), true));
+            }
+            // Add the images
+            else {
+//                Bitmap image = BitmapHelper.decodeBitmapFromFile(file.getAbsolutePath(), 50, 50);
+                items.add(new ViewItem(file.getPath(), false));
+            }
+        }
+        return items;
+    }
+
+    /**
+     * 오직 이미지만 있는 폴더만 어레이리스트로 구성한다
+     *
+     * @return
+     */
+    public static List<ViewItem> searchingDirectoryContainsImages() {
+        File f = new File(MainAct.root);
+        ArrayList<File> resultDirectory = new ArrayList<>();
+        ArrayList<File> resultDirectoryWithNoDuplication = null;
+        ArrayList<ViewItem> items = new ArrayList<>();
+
+        if (!f.exists()) {
+            return null;
+        }
+
+        findSubDirecoryContainsImages(f, resultDirectory);
+
+        //어레이 리스트를 중복을 제거하는 과정
+        if (resultDirectory != null && resultDirectory.size() >= 0) {
+            HashSet hs = new HashSet(resultDirectory);
+            resultDirectoryWithNoDuplication = new ArrayList<>(hs); //중복 제거된 이미지를 포함하는 파일들이 담긴 어레이리스트
+        }
+        DebugUtil.showDebug("FileUtil, searchingDirectoryContaingsImages resultDirectoryWithNoDuplication : " + resultDirectoryWithNoDuplication.toString());
+
+        for (File result : resultDirectoryWithNoDuplication) {
+            ViewItem viewItem = new ViewItem(result.getPath(), true);
+            //result라는 폴더의
+            viewItem.setRecentImageFile(FileUtil.getLatestImagesFilePath(result.getPath()));//그 폴더의 가장 최근 파일의 경로를 지정
+            items.add(viewItem);
+        }
+
+        return items;
+    }
+
+    public static void findSubDirecoryContainsImages(File parentFile, ArrayList<File> subFiles) {
+        if (parentFile.isFile()) { //만약 어떤 항목이 파일이고
+            if (parentFile.getPath().endsWith(".jpg") || parentFile.getPath().endsWith(".png")) {//사진인 파일이면
+                if (parentFile.getParentFile() != null) {
+                    subFiles.add(parentFile.getParentFile()); //그 파일의 상위 폴더를 리스트에 추가한다
+//                    DebugUtil.showDebug("FileUtil, findSubDirecoryContainsImages subFile : " + subFiles.toString() + " 추가됨");
+                }
+            }
+        } else if (parentFile.isDirectory()) { // 그렇지 않고 그 항목이 폴더이면
+            File[] childFiles = parentFile.listFiles();
+            for (File childFile : childFiles) { // 재귀적으로 다시 함수를 호출한다.
+                findSubDirecoryContainsImages(childFile, subFiles);
+            }
+        }
+
+    }
+
+
+    /**
+     * 카테고리 항목 클릭 시 클릭한 카테고리 id를 받아
+     * Database query를 통해서 하위항목들에 대한 정보를 가져와 저장한다
+     *
+     * @param clickedcId
+     * @return
+     */
+    public static List<ViewItem> createViewItems(Integer clickedcId) {
+        List<ViewItem> items = new ArrayList<>();
+        String selectQuery = "SELECT * FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME + " where " + DatabaseConstantUtil.COLUMN_RANK + "=0 and " + DatabaseConstantUtil.COLUMN_CATEGORY_ID + "=" + clickedcId + ";";
+
+        items = DatabaseCRUD.getViewItemsWithSpecificCId(selectQuery);
+
+        return items;
+    }
+
+    public static Integer itemsCountInsidePath(String directoryPath) {
+        int result = 0;
+
+        File[] files = new File(directoryPath).listFiles(new FileUtil.ImageFileFilter());
+        if (files != null) {
+            result = files.length;
+        }
+        return result;
+    }
+
+    public static Integer itemsCountInsideCategory(Integer clickedcId) {
+        int count;
+        String selectQuery = "SELECT * FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME + " where " + DatabaseConstantUtil.COLUMN_RANK + "=0 and " + DatabaseConstantUtil.COLUMN_CATEGORY_ID + "=" + clickedcId + ";";
+
+        count = DatabaseCRUD.getViewItemsWithSpecificCId(selectQuery).size();
+
+        return count;
+    }
+
+    /**
+     * 파일 경로로부터 파일의 이름만 가져오는 메소드
+     *
+     * @param path
+     * @return
+     */
+    public static String getFileNameFromPath(String path) {
+        File temp = new File(path);
+        return temp.getName();
+    }
+
+    /**
+     * 파일 필터
+     */
+    public static class ImageFileFilter implements FileFilter {
+        @Override
+        public boolean accept(File file) {
+            if (file.isDirectory()) {
+                return true;
+            } else if (isImageFile(file.getAbsolutePath())) {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    public static String getLatestImagesFilePath(String parentFile) {
+        File temp = new File(parentFile);
+        String lastImagePath = "";
+
+        if (!temp.exists()) {
+            return "";
+        }
+
+        if (temp.isDirectory()) {
+
+            File[] childFiles = temp.listFiles();
+            for (File childFile : childFiles) {
+                if (childFile.isFile()) {
+                    if(FileUtil.isImageFile(childFile.getPath())){
+                        lastImagePath = childFile.getPath();
+                    }
+                }
+            }
+            DebugUtil.showDebug("FileUtil, getLatestImagesFilePath, lastImagePath : " + lastImagePath);
+        }
+
+        return lastImagePath;
+    }
+
+    /**
+     * 특정 확장자를 가진 파일인지를 확인하는 메소드
+     *
+     * @param filePath
+     * @return .jpg, .png로 끝나면 true, 아니면 false
+     */
+    public static boolean isImageFile(String filePath) {
+        if (filePath.endsWith(".jpg") || filePath.endsWith(".png"))
+        // Add other formats as desired
+        {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 파일 및 폴더 삭제함수
+     */
+    public static void removeDir(String path) {
+        String mRootPath = path;
+
+        File file = new File(mRootPath);
+        File[] childFileList = file.listFiles();
+        if (childFileList != null) {
+            for (File childFile : childFileList) {
+                if (childFile.isDirectory()) {
+                    removeDir(childFile.getAbsolutePath());    //하위 디렉토리
+                } else {
+                    childFile.delete();    //하위 파일
+                }
+            }
+            file.delete();    //root 삭제
+        } else { //널 인 경우
+            removeFile(mRootPath);
+        }
+
+    }
+
+    public static void removeFile(String path) {
+        String removeFilePath = path;
+
+        File file = new File(removeFilePath);
+        if (file != null) {
+            file.delete();
+        }
+    }
+
+    /**
+     * 상위 폴더의 경로를 반환하는 함수
+     */
+    public static String getParentPath(String path) {
+        File cFile = new File(path);
+        File parentFile = cFile.getParentFile();
+        return parentFile.getAbsolutePath();
+    }
+
+
+    /**
+     * 파일을 복사하는 메소드
+     */
+    public static void copyFile(String src, String dest) {
+        long fsize = 0;
+        try {
+            FileInputStream fin = new FileInputStream(src);
+            FileOutputStream fout = new FileOutputStream(dest);
+
+            FileChannel inc = fin.getChannel();
+            FileChannel outc = fout.getChannel();
+
+            //복사할 file size
+            fsize = inc.size();
+
+            inc.transferTo(0, fsize, outc);
+
+            inc.close();
+            outc.close();
+            fin.close();
+            fout.close();
+            //입출력을 위한 버퍼를 할당한다.
+            ByteBuffer buf = ByteBuffer.allocateDirect(1024);
+
+
+            while (true) {
+                if (inc.read(buf) == -1)
+                    break;
+                buf.flip();
+                outc.write(buf);
+                buf.clear();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public static void moveFile(String src, String destFolderPath) {
+
+        try {
+            File afile = new File(src);
+
+            if (afile.renameTo(new File(destFolderPath + "/" + afile.getName()))) {
+                System.out.println("File is moved successful!");
+            } else {
+                System.out.println("File is failed to move!");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void classifyAllFiles(Context context) {
+        File f = new File(MainAct.root);
+        ArrayList<File> subFiles = new ArrayList<>();
+        DatabaseHelper databaseHelper = DatabaseHelper.getInstacnce(context);
+
+
+        if (!f.exists()) {
+            DebugUtil.showDebug("디렉토리가 존재하지 않습니다");
+            return;
+        }
+
+        //분류하기 전 DB 테이블의 내용들을 비우기
+        DatabaseCRUD.deleteAll();
+
+        FileUtil.findSubFiles(f, subFiles);
+        System.out.println("———————————-");
+
+        for (File file : subFiles) {
+            if (file.isFile()) {
+                DebugUtil.showDebug("파일 이름: " + file.getName());
+                try {
+                    DebugUtil.showDebug("파일 경로: " + file.getCanonicalPath());
+
+                    //파일들 분류하기
+                    DiLabClassifierUtil.classifyViewItems(databaseHelper, "whatever user wants to input", file.getPath());
+                    DebugUtil.showDebug("FileUtil, CreateViewItems(), file.getPath : when images 분류된 file.getPath() : " + file.getPath());
+
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                DebugUtil.showDebug("파일 크기: " + file.length());
+                DebugUtil.showDebug("———————————-");
+            } else if (file.isDirectory()) {
+                DebugUtil.showDebug("디렉토리 이름: " + file.getName());
+                try {
+                    DebugUtil.showDebug("디렉토리 경로: " + file.getCanonicalPath());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                DebugUtil.showDebug("———————————-");
+            }
+        }
+//        databaseHelper.close();
+    }
+
+    public static void findSubFiles(File parentFile, ArrayList<File> subFiles) {
+        if (parentFile.isFile()) {
+            subFiles.add(parentFile);
+        } else if (parentFile.isDirectory()) {
+            subFiles.add(parentFile);
+            File[] childFiles = parentFile.listFiles();
+            for (File childFile : childFiles) {
+                findSubFiles(childFile, subFiles);
+            }
+        }
+    }
+
+}

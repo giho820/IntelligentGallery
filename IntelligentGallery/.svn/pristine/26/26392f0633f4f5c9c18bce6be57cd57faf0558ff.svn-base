@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <!--<ImageView-->
+    <!--android:id="@+id/image"-->
+    <!--android:layout_width="72dip"-->
+    <!--android:layout_height="72dip"-->
+    <!--android:layout_margin="3dip"-->
+    <!--android:adjustViewBounds="true"-->
+    <!--android:contentDescription="@string/descr_image"-->
+    <!--android:scaleType="centerCrop" />-->
+
+    <ImageView
+        android:id="@+id/image"
+        android:layout_width="@dimen/dp_116.5"
+        android:layout_height="@dimen/dp_116.5"
+        android:adjustViewBounds="true"
+        android:contentDescription="@string/descr_image"
+        android:background="@android:color/white"
+        android:scaleType="centerCrop" />
+
+
+    <CheckBox
+        android:id="@+id/checkBox_item_list_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left|top"
+        android:singleLine="false" />
+
+
+
+</FrameLayout>

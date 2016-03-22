@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/item_list_framelayout"
+    android:layout_width="@dimen/dp_116.5"
+    android:layout_height="@dimen/dp_116.5"
+    android:layout_gravity="center">
+
+
+    <ImageView
+        android:id="@+id/imageView_folder_thumbnail"
+        android:layout_width="@dimen/dp_116.5"
+        android:layout_height="@dimen/dp_116.5"
+        android:layout_gravity="left"
+        android:src="@drawable/act_main_image_default" />
+
+    <CheckBox
+        android:id="@+id/item_list_checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:onClick="onCheckBoxClick"
+        android:singleLine="false" />
+
+    <LinearLayout
+        android:id="@+id/item_list_info"
+        android:layout_width="@dimen/dp_116.5"
+        android:layout_height="@dimen/dp_71"
+        android:layout_gravity="left|bottom"
+        android:background="@drawable/act_main_item_list_gradation"
+        android:gravity="bottom"
+        android:orientation="horizontal">
+
+
+        <TextView
+            android:id="@+id/item_list_folder_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/dp_10"
+            android:layout_marginLeft="@dimen/dp_7"
+            android:ellipsize="start"
+            android:singleLine="true"
+            android:text="폴더 이름"
+            android:textColor="@color/colorLigntGray" />
+
+        <TextView
+            android:id="@+id/left_parentheses"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/dp_10"
+            android:layout_marginLeft="@dimen/dp_3"
+            android:singleLine="true"
+            android:text="("
+            android:textColor="@color/colorLigntGray" />
+
+        <TextView
+            android:id="@+id/item_list_file_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/dp_10"
+            android:ellipsize="start"
+            android:singleLine="true"
+            android:text="11"
+            android:textColor="@color/colorLigntGray" />
+
+        <TextView
+            android:id="@+id/right_parentheses"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/dp_10"
+            android:singleLine="true"
+            android:text=")"
+            android:textColor="@color/colorLigntGray" />
+    </LinearLayout>
+
+
+</FrameLayout>

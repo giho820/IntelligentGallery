@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorMajor"
+    android:orientation="vertical"
+    android:theme="@style/AppTheme"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="kr.ac.korea.intelligentgallery.act.MainAct"
+    tools:showIn="@layout/activity_main">
+
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/dp_36.5"
+                android:background="@color/colorMajor">
+
+
+                <TextView
+                    android:id="@+id/textViewFolderPath"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="left|center_vertical"
+                    android:layout_marginLeft="@dimen/dp_10"
+                    android:text="내 폴더"
+                    android:textColor="@color/colorMajorText"
+                    android:textSize="@dimen/abc_text_size_medium_material" />
+
+                <TextView
+                    android:id="@+id/textViewFolderCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="@dimen/dp_20"
+                    android:layout_gravity="right|center"
+                    android:layout_marginRight="@dimen/dp_6.5"
+                    android:background="@drawable/round_rectangle"
+                    android:gravity="center"
+                    android:paddingLeft="@dimen/dp_10"
+                    android:paddingRight="@dimen/dp_10"
+                    android:textColor="#cecece"
+                    android:textSize="@dimen/abc_text_size_small_material" />
+            </FrameLayout>
+
+
+            <kr.ac.korea.intelligentgallery.common.ExpandableHeightGridView
+                android:id="@+id/gridViewMainFolder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/dp_13.33"
+                android:background="@color/colorMajor"
+                android:columnWidth="@dimen/dp_116.5"
+                android:gravity="center"
+                android:numColumns="3"
+                android:padding="@dimen/dp_4"
+                android:scrollbars="horizontal" />
+
+
+            <LinearLayout
+                android:id="@+id/linearLayoutHidenSectionWhenSelectionMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/dp_36.5"
+                    android:background="@color/colorMajor">
+
+                    <TextView
+                        android:id="@+id/textViewCategory"
+                        android:layout_width="wrap_content"
+
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="left|center_vertical"
+                        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+                        android:text="카테고리"
+                        android:textColor="@color/colorMajorText"
+                        android:textSize="@dimen/abc_text_size_medium_material" />
+
+                    <TextView
+                        android:id="@+id/textViewCategoryFolderCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="@dimen/dp_20"
+                        android:layout_gravity="right|center_vertical"
+                        android:layout_marginRight="@dimen/dp_6.5"
+                        android:background="@drawable/round_rectangle"
+                        android:gravity="center"
+                        android:paddingLeft="@dimen/dp_10"
+                        android:paddingRight="@dimen/dp_10"
+                        android:textColor="@color/colorMajorText"
+                        android:textSize="@dimen/abc_text_size_small_material" />
+                </FrameLayout>
+
+
+                <kr.ac.korea.intelligentgallery.common.ExpandableHeightGridView
+                    android:id="@+id/gridViewMainCategory"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnWidth="@dimen/dp_116.5"
+                    android:gravity="center"
+                    android:numColumns="3"
+                    android:padding="@dimen/dp_4" />
+
+            </LinearLayout>
+
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

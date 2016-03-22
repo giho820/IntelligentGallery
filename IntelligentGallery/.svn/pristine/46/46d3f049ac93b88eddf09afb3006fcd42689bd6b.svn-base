@@ -1,0 +1,62 @@
+package com.example.dilab.sampledilabapplication.Sample;
+
+import java.util.ArrayList;
+import java.util.Random;
+
+public class SampleClassification {
+    private SampleCentroidClassifier centroidClassifier;
+    private SampleCategoryNamingConverter cNameConverter;
+
+    public SampleClassification(String path, String file){
+//        centroidClassifier = new SampleCentroidClassifier();
+        cNameConverter = new SampleCategoryNamingConverter(2);
+    }
+
+    public String classify(String rawData){
+        Random rn = new Random();
+        int rNum = rn.nextInt(12) + 1;
+
+        int resultCategoryID = allCategoriesID.get(rNum);
+        String resultCategory = allCategories.get(rNum);
+
+        return cNameConverter.convert(resultCategory);
+    }
+
+    public SampleCentroidClassifier getCentroidClassifier(){
+        return centroidClassifier;
+    }
+
+
+
+    public static ArrayList<String> allCategories = new ArrayList<String>();
+    public static ArrayList<Integer> allCategoriesID = new ArrayList<Integer>();
+    public static void initialize(){
+
+        allCategories.add("Top/사회/종교와영성");
+        allCategories.add("Top/스포츠/야구/대학및대학교");
+        allCategories.add("Top/스포츠/축구");
+        allCategories.add("Top/예술/텔레비전/프로그램");
+        allCategories.add("Top/컴퓨터/소프트웨어/회계");
+        allCategories.add("Top/예술/음악/스타일");
+        allCategories.add("Top/컴퓨터/소프트웨어/데이터베이스");
+        allCategories.add("Top/컴퓨터/데이터형식");
+        allCategories.add("Top/가정/요리");
+        allCategories.add("Top/비즈니스/통신/서비스");
+        allCategories.add("Top/사회/문제");
+        allCategories.add("Top/비즈니스/예술및엔터테인먼트/음악/라벨/특수");
+        allCategories.add("Top/쇼핑/휴양/야외/낚시");
+        allCategoriesID.add(468093);
+        allCategoriesID.add(480229);
+        allCategoriesID.add(493368);
+        allCategoriesID.add(43909);
+        allCategoriesID.add(65295);
+        allCategoriesID.add(30396);
+        allCategoriesID.add(65414);
+        allCategoriesID.add(60737);
+        allCategoriesID.add(89403);
+        allCategoriesID.add(58443);
+        allCategoriesID.add(456362);
+        allCategoriesID.add(49466);
+        allCategoriesID.add(449777);
+    }
+}

@@ -1,0 +1,65 @@
+<resources>
+
+    <string name="app_name">지능형 갤러리</string>
+    <string name="action_view_count_in_one_row">한 줄에 보기</string>
+    <string name="action_arranging">정렬하기</string>
+    <string name="action_adding">추가하기</string>
+    <string name="action_revealing">숨겨진 항목 보기</string>
+    <string name="action_clear_inverted_index_db">분류 DB 초기화</string>
+    <string name="action_clear_inverted_index_db_confirm">초기화 확인</string>
+
+    <string name="action_searching">검색하기</string>
+    <string name="action_camera">사진찍기</string>
+    <string name="title_activity_folder_category">FolderCategoryAct</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="action_concealing">숨기기</string>
+    <string name="action_renaming">이름 바꾸기</string>
+
+    <string name="action_trashing">지우기</string>
+    <string name="action_hiding">숨기기</string>
+    <string name="action_select_cover_image">표지 바꾸기</string>
+    <string name="action_cover_basic">기본</string>
+    <string name="action_cover_select">선택</string>
+    <string name="action_select_all">모두 선택</string>
+
+    <string name="action_slide_showing">슬라이드쇼</string>
+    <string name="action_select_mode">선택 모드</string>
+
+    <string name="action_sharing">공유하기</string>
+    <string name="action_delete">삭제하기</string>
+    <string name="action_delete_confirm">삭제 확인</string>
+
+
+    <string name="action_detail">세부정보</string>
+    <string name="action_rotation">회전하기</string>
+    <string name="action_moving">이동하기</string>
+    <string name="action_copying">복사하기</string>
+    <string name="action_viewing_in_map">지도에서 위치보기</string>
+
+    <string name="action_rotation_left90">왼쪽으로 90도 회전</string>
+    <string name="action_rotation_right90">오른쪽으로 90도 회전</string>
+    <string name="action_rotation_180">180도 회전</string>
+
+    <string name="action_column_num_2">2개 보기</string>
+    <string name="action_column_num_3">3개 보기</string>
+    <string name="action_column_num_4">4개 보기</string>
+
+    <string name="action_arranging_orderby_abc">이름 순</string>
+    <string name="action_arranging_orderby_date_taken">찍은 순</string>
+    <string name="action_arranging_orderby_date_added">추가된 시간 순</string>
+    <string name="action_arranging_orderby_size">크기 순</string>
+    <string name="action_arranging_orderby_data">경로 순</string>
+
+
+    <!-- Content descriptions -->
+    <string name="descr_image">Image</string>
+
+    <!--Crash 관련 -->
+    <string name="crash_toast_text">crash 발생</string>
+    <string name="crash_dialog_title">Crash</string>
+    <string name="crash_dialog_text">에러로그 전송</string>
+    <string name="crash_dialog_ok_toast">빠른수정하겠습니다.</string>
+
+
+</resources>

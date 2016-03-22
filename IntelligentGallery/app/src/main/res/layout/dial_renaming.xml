@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/c_4d000000">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginLeft="@dimen/dp_37.5"
+        android:layout_marginRight="@dimen/dp_37.5"
+        android:background="@drawable/bg_ffffffff_common_dialog"
+        android:orientation="vertical">
+
+        <kr.ac.korea.intelligentgallery.common.view.textview.TextViewNotoSansCJKkrMedium
+            android:id="@+id/txt_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/dp_24"
+            android:layout_marginTop="@dimen/dp_24"
+            android:text="이름 변경"
+            android:textColor="@color/c_ff1b1627"
+            android:textSize="@dimen/dp_20" />
+
+        <EditText
+            android:id="@+id/edittxt_renaming"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/dp_24"
+            android:layout_marginRight="@dimen/dp_31"
+            android:layout_marginTop="@dimen/dp_24"
+            android:lineSpacingExtra="@dimen/dp_5"
+            android:singleLine="true"
+            android:textColor="@color/c_ff7d7a85"
+            android:textSize="@dimen/dp_16"/>
+
+        <!--<kr.ac.korea.intelligentgallery.common.view.textview.TextViewNotoSansCJKkrRegular-->
+            <!--android:id="@+id/txt_message"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_marginLeft="@dimen/dp_24"-->
+            <!--android:layout_marginRight="@dimen/dp_31"-->
+            <!--android:layout_marginTop="@dimen/dp_24"-->
+            <!--android:lineSpacingExtra="@dimen/dp_5"-->
+            <!--android:singleLine="false"-->
+            <!--android:text="입력하신 이메일이나 암호를 다시 확인해주세요."-->
+            <!--android:textColor="@color/c_ff7d7a85"-->
+            <!--android:textSize="@dimen/dp_16" />-->
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:layout_marginRight="@dimen/dp_31"
+            android:layout_marginTop="@dimen/dp_30"
+            android:layout_marginBottom="@dimen/dp_22"
+            android:orientation="horizontal">
+
+
+            <kr.ac.korea.intelligentgallery.common.view.textview.TextViewNotoSansCJKkrMedium
+                android:id="@+id/txt_negative"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="@dimen/dp_37.4"
+                android:text="취소"
+                android:textColor="@color/c_ff00c1bd"
+                android:textSize="@dimen/dp_14" />
+
+
+            <kr.ac.korea.intelligentgallery.common.view.textview.TextViewNotoSansCJKkrMedium
+                android:id="@+id/txt_positive"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="확인"
+                android:textColor="@color/c_ff00c1bd"
+                android:textSize="@dimen/dp_14" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+</FrameLayout>

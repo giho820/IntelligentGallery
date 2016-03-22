@@ -1,0 +1,684 @@
+package kr.ac.korea.intelligentgallery.act;
+
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import com.example.dilab.sampledilabapplication.Sample.Models.SampleScoreData;
+import com.example.dilab.sampledilabapplication.Sample.SampleCategoryNamingConverter;
+import com.example.dilab.sampledilabapplication.Sample.SampleCentroidClassifier;
+import com.example.dilab.sampledilabapplication.Sample.SampleClassification;
+import com.example.dilab.sampledilabapplication.Sample.SampleDatabaseInitializer;
+import com.example.dilab.sampledilabapplication.Sample.SampleMNClassifier;
+import com.example.dilab.sampledilabapplication.Sample.SampleResourceInitializer;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import kr.ac.korea.intelligentgallery.R;
+import kr.ac.korea.intelligentgallery.adapter.ViewItemAdapter;
+import kr.ac.korea.intelligentgallery.common.Definitions;
+import kr.ac.korea.intelligentgallery.common.ExpandableHeightGridView;
+import kr.ac.korea.intelligentgallery.common.ParentAct;
+import kr.ac.korea.intelligentgallery.data.ViewItem;
+import kr.ac.korea.intelligentgallery.database.DatabaseCRUD;
+import kr.ac.korea.intelligentgallery.database.DatabaseHelper;
+import kr.ac.korea.intelligentgallery.database.util.DatabaseConstantUtil;
+import kr.ac.korea.intelligentgallery.dialog.CommonDialog;
+import kr.ac.korea.intelligentgallery.listener.CommonDialogListener;
+import kr.ac.korea.intelligentgallery.util.ConstantUtil;
+import kr.ac.korea.intelligentgallery.util.DebugUtil;
+import kr.ac.korea.intelligentgallery.util.DiLabClassifierUtil;
+import kr.ac.korea.intelligentgallery.util.FileUtil;
+import kr.ac.korea.intelligentgallery.util.MoveActUtil;
+import kr.ac.korea.intelligentgallery.util.TextUtil;
+
+public class MainAct extends ParentAct implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
+
+//    public static final String rootFolderName = "/DCIM";
+    //    public static final String categoryRootFolderName = "/카테고리";
+    public static String root = null; // 시스템 전체의 root dir
+//    public static String categoryRoot = null; // 카테고리를 저장하는 폴더 dir
+    public static String currentPath = null;
+
+    private Toolbar toolbar;
+    private TextView tvFolderPath;
+    private TextView tvFoldersNum;
+
+    private TextView tvCategorysNum;
+
+    // 롱클릭 여부를 확인하는 변수
+    public static boolean longClicked = false;
+    private LinearLayout linearLayoutMainCategorySection;
+
+    // 폴더 그리드뷰
+    private ExpandableHeightGridView mGridViewFolder;
+    private ViewItemAdapter mViewItemAdapter;
+    private List<ViewItem> gridItems;
+
+    // 카테고리 그리드뷰
+    private ExpandableHeightGridView mGridViewCategory;
+    private ViewItemAdapter mViewItemAdapterCategory;
+    private List<ViewItem> gridItemsCategory;
+
+
+    // 데이터베이스 헬퍼
+    private DatabaseHelper databaseHelper;
+
+    /**
+     * onCreate()
+     *
+     * @param savedInstanceState
+     */
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        DebugUtil.showDebug("MainAct, onCreate()");
+
+        databaseHelper = DatabaseHelper.getInstacnce(this);
+//        // asset폴더에 있는 Sqlite 데이터베이스 가져오기
+//        copyDatabase(DatabaseHelper.sqLiteDatabase);
+
+        setContentView(R.layout.activity_main);
+
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle("사진"); //액션바의 타이틀을 설정하는 방법
+        toolbar.inflateMenu(R.menu.menu_main);
+
+        // 폴더 영역의 이름과 폴더의 개수를 나타내주는 TextView
+        tvFolderPath = (TextView) findViewById(R.id.textViewFolderPath);
+        tvFoldersNum = (TextView) findViewById(R.id.textViewFolderCount);
+
+        // 카테고리 영역의 폴더의 개수를 나타내주는 TextView
+        tvCategorysNum = (TextView) findViewById(R.id.textViewCategoryFolderCount);
+
+        // 롱클릭 시 사라질 카테고리 영역을 감싸는 LinearLayout
+        linearLayoutMainCategorySection = (LinearLayout) findViewById(R.id.linearLayoutHidenSectionWhenSelectionMode);
+
+        // 분류기 관련 객체들 초기화
+        DiLabClassifierUtil.initializer = new SampleDatabaseInitializer(this);
+        DiLabClassifierUtil.luceneKoInitializer = new SampleResourceInitializer();
+        DiLabClassifierUtil.luceneKoInitializer.initialize(this);
+        DiLabClassifierUtil.cNameConverter = new SampleCategoryNamingConverter(2);
+        DiLabClassifierUtil.mnClassifier = new SampleMNClassifier(3, 2);
+//        DiLabClassifierUtil.classification = new SampleClassification(DiLabClassifierUtil.initializer.getTargetPath(), "sigmaBase030.db");
+        DiLabClassifierUtil.centroidClassifier = SampleCentroidClassifier.getClassifier(DiLabClassifierUtil.initializer.getTargetPath(), "sigmaBase030.db");
+
+        SampleClassification.initialize();
+        DiLabClassifierUtil.K = 2; //const로 해서 변경할 수 없도록 처리해야한다.
+
+        // 각 폰 마다 다른 SD카드의 존재 유무에 따라 루트폴더의 경로를 세팅
+        FileUtil.initDir();
+
+        /* 처음 시작 시 루트에 있는 폴더들을 띄움
+         폴더 구조에서는 setGridAdapter 함수를 통해서 동적으로 생성함 */
+        if (!TextUtil.isNull(MainAct.root)) {
+            setGridAdapter(MainAct.root);
+        } else {
+            DebugUtil.showDebug("MainAct, onCreate(), root path is null");
+        }
+
+        //카테고리 리스트 만드는 쿼리
+        String queryForCategoryList = "SELECT DISTINCT " + DatabaseConstantUtil.COLUMN_CATEGORY_ID + " FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME + " where " + DatabaseConstantUtil.COLUMN_RANK + "=0;";
+        ArrayList<Integer> categoryList = new ArrayList<>(); // cID 저장하는 어레이리스트
+        ArrayList<ViewItem> viewItemCategoryList = new ArrayList<>(); // cID와 cName을 저장하는 어레이리스트
+
+        categoryList = DatabaseCRUD.selectCategoryList(queryForCategoryList);
+
+        if (categoryList != null && categoryList.size() >= 0) {
+            for (int cID : categoryList) {
+                ViewItem viewItemCategory = new ViewItem();
+                String cNameOriginal = DiLabClassifierUtil.centroidClassifier.getCategoryName(cID);
+                String cName = DiLabClassifierUtil.cNameConverter.convert(cNameOriginal);
+
+                viewItemCategory.setCategoryId(cID);
+                viewItemCategory.setCategoryName(cName);
+                viewItemCategory.setIsDirectory(true);
+
+                viewItemCategoryList.add(viewItemCategory);
+            }
+        }
+
+        for (ViewItem viewItemCategory : viewItemCategoryList) {
+            DebugUtil.showDebug("MainAct, onCreate(), this area will be Category section : " + viewItemCategory.getCategoryName() + "(" + viewItemCategory.getCategoryId() + ")");
+        }
+
+        /** 카테고리 폴더의 내용을 띄움 */
+        if (viewItemCategoryList != null && viewItemCategoryList.size() >= 0) {
+            setGridCategoryAdapter(viewItemCategoryList);
+        } else {
+            DebugUtil.showDebug("MainAct, onCreate(), viewItemCategoryList null");
+        }
+    }
+
+//    /**
+//     * to copy database
+//     *
+//     * @param sqLiteDatabase
+//     */
+//    private void copyDatabase(SQLiteDatabase sqLiteDatabase) {
+//
+//        if (!DatabaseCRUD.checkTable(databaseHelper, sqLiteDatabase, DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME)) {
+//            DebugUtil.showDebug("table is not existed");
+//            try {
+//                DatabaseUtil.copyDataBase(this);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        } else {
+//            DebugUtil.showDebug("table is existed");
+//        }
+//    }
+
+
+    /**
+     * This will create our GridViewItems and set the adapter
+     *
+     * @param path The directory in which to search for images
+     */
+    private void setGridAdapter(String path) {
+        // Create a new grid adapter
+
+        DebugUtil.showDebug("MainAct, setGridAdapter, path : " + path);
+        //파일 경로를 통해 해당 경로 아래에 있는 파일 및 폴더들을 가져온다
+//        gridItems = FileUtil.createViewItems(path);
+
+        //새로 구성한 파일구조
+        //이미지를 포함하는 폴더만 보여주도록 함
+        gridItems = FileUtil.searchingDirectoryContainsImages();
+
+        if (gridItems == null) {
+            return;
+        }
+        tvFoldersNum.setText("" + gridItems.size());
+        mViewItemAdapter = new ViewItemAdapter(this, gridItems);
+
+        // Set the grid adapter
+        mGridViewFolder = (ExpandableHeightGridView) findViewById(R.id.gridViewMainFolder);
+        mGridViewFolder.setExpanded(true);
+        mGridViewFolder.setAdapter(mViewItemAdapter);
+
+        // Set the onClickListener
+        mGridViewFolder.setOnItemClickListener(this);
+        mGridViewFolder.setOnItemLongClickListener(this);
+
+    }
+
+    //카테고리 부분 폴더 띄워주는 부분
+
+    /**
+     * @param categoryNames
+     */
+    private void setGridCategoryAdapter(List categoryNames) {
+        // Create a new grid adapter
+
+        gridItemsCategory = categoryNames;
+        gridItemsCategory = categoryNames;
+
+        if (gridItemsCategory == null) {
+            return;
+        }
+//        tvFolderPath.setText(path);
+        tvCategorysNum.setText("" + gridItemsCategory.size());
+
+        mViewItemAdapter = new ViewItemAdapter(this, gridItemsCategory);
+
+        // Set the grid adapter
+        mGridViewCategory = (ExpandableHeightGridView) findViewById(R.id.gridViewMainCategory);
+        mGridViewCategory.setExpanded(true);
+        mGridViewCategory.setAdapter(mViewItemAdapter);
+
+        // Set the onClickListener
+        mGridViewCategory.setOnItemClickListener(this);
+        mGridViewCategory.setOnItemLongClickListener(this);
+
+
+    }
+
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        DebugUtil.showDebug("MainAct, onItemClick(), view.getId : " + parent.getId());
+
+        ViewItem data = (ViewItem) parent.getAdapter().getItem(position);
+
+        switch (parent.getId()) {
+            //폴더 항목
+            case R.id.gridViewMainFolder:
+                DebugUtil.showDebug("MainAct, onItemClick(), case R.id.gridViewFolder " + position);
+                DebugUtil.showDebug("MainAct, onItemClick(), case R.id.gridViewFolder, mFileArrayList.get(position) " + gridItems.get(position).getPath());
+
+                String path = gridItems.get(position).getPath();
+
+                if (gridItems.get(position).isDirectory()) {
+                    //하위 폴더에 또 다른 폴더가 있다면 아래 줄을 실행해야한다. 액티비티가 넘어가지 않고 보여줄 수 있도록
+//                    setGridAdapter(gridItems.get(position).getPath());
+                    if (!MainAct.longClicked) {
+                        //FolderCategoryAct 이동
+                        super.goToFolderCategoryAct(path);
+                    }
+                } else {
+                    // Display the image, 경로에 바로 사진이 있다면 사진을 보여주는 역할
+                }
+                break;
+            //카테고리 항목
+            case R.id.gridViewMainCategory:
+                DebugUtil.showDebug("MainAct, onItemClick(), case R.id.gridViewMainCategory, " + position);
+                if (gridItemsCategory.get(position).isDirectory()) {
+                    int clickedCid = gridItemsCategory.get(position).getCategoryId();
+
+                    DebugUtil.showDebug("MainAct, onItemClick(), isDirectory, : " + clickedCid);
+                    if (!MainAct.longClicked) {
+                        super.goToFolderCategoryAct(clickedCid);
+                    }
+                }
+                break;
+
+        }
+    }
+
+
+    @Override
+    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        DebugUtil.showDebug("MainAct, onItemLongClick(), " + parent.getId());
+
+        switch (parent.getId()) {
+            case R.id.gridViewMainFolder:
+                //enable checkbox
+                DebugUtil.showDebug("MainAct, onItemLongClick(), enable checkbox");
+                MainAct.longClicked = true;
+                //임시방편
+                setGridAdapter(root);
+                mViewItemAdapter.notifyDataSetChanged();
+
+                //hide category folders
+                DebugUtil.showDebug("MainAct, onItemLongClick(), hide Category Folders");
+                linearLayoutMainCategorySection.setVisibility(View.GONE);
+
+                //change menu
+                toolbar.getMenu().clear();
+                toolbar.inflateMenu(R.menu.menu_main_long_clicked);
+                getSupportActionBar().setTitle("사진 선택"); //액션바의 타이틀을 설정하는 방법
+
+
+                break;
+
+            case R.id.gridViewMainCategory:
+                DebugUtil.showDebug("MainAct, onItemLongClick(), case R.id.gridViewMainCategory");
+                break;
+
+        }
+
+        return false;
+    }
+
+
+    @Override
+    public void onBackPressed() {
+
+        if (MainAct.longClicked) {
+            MainAct.longClicked = false;
+            if (gridItems != null) {
+                for (int i = 0; i < gridItems.size(); i++) {
+                    gridItems.get(i).setIsChecked(false);
+                }
+            }
+            mViewItemAdapter.notifyDataSetChanged();
+            linearLayoutMainCategorySection.setVisibility(View.VISIBLE);
+
+            //change menu
+            toolbar.getMenu().clear();
+            toolbar.inflateMenu(R.menu.menu_main);
+            getSupportActionBar().setTitle("폴더"); //액션바의 타이틀을 설정하는 방법
+
+
+        } else {
+            super.onBackPressed();
+//            File cFile = new File(currentPath);
+//            String parentPath = cFile.getParentFile().getPath();
+//
+//            if (cFile.getPath().equalsIgnoreCase(Environment.getRootDirectory().getAbsolutePath()) || cFile.getPath().equalsIgnoreCase(Environment.getExternalStorageDirectory().getAbsolutePath())) {
+//                DebugUtil.showDebug("MainAct, onBackPressed() 어플리케이션 종료");
+////                finish();
+//                return;
+//            }
+//            setGridAdapter(parentPath);
+        }
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        if (MainAct.longClicked) {
+            DebugUtil.showDebug("MainAct.onCreateOptionsMenu(), when item longClicked");
+            getMenuInflater().inflate(R.menu.menu_main_long_clicked, menu);
+        } else {
+            getMenuInflater().inflate(R.menu.menu_main, menu);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        switch (id) {
+            /** normal states */
+
+            /** 카메라 사진 */
+            case R.id.action_camera:
+                DebugUtil.showDebug("move to camera");
+                MoveActUtil.cameraIntent(MainAct.this, ConstantUtil.MAINACT_REQUESTCODE_FOR_CAMERA_INTENT);
+                break;
+
+            /** 검색하기 */
+            case R.id.action_searching:
+                DebugUtil.showDebug("MainAct, onOptionsItemSelected(), case R.id.action_searching, Searching Dialog");
+
+
+                CommonDialog newSearchDialog = new CommonDialog();
+                newSearchDialog.setDialogSettings(new CommonDialogListener() {
+
+                    @Override
+                    public void onClickCommonDialog(DialogInterface dialog, int which, String inputText) {
+                        DebugUtil.showDebug("MainAct, onOptionItemSelected(), case R.id.action_searching : " + which);
+                        String textViewString = null;
+
+                        ArrayList<SampleScoreData> categoryList;
+                        /** inputText : 사용자가 검색 창에 입력한 텍스트 */
+                        if (inputText == null || inputText.equals("")) {
+                            textViewString = "Please write input text";
+                        }
+
+                        switch (which) {
+                            case CommonDialog.POSITIVE:
+                                DebugUtil.showDebug("MainAct, onOptionItemSelected(), case R.id.action_searching, case Positive ");
+//                                DebugUtil.showToast(MainAct.this, "샘플 적용 테스트 중");
+                                /* Qickpic에서는 파일명을 기준으로 검색을 해서 매칭되는 파일을 리스트뷰로 띄우는 구조
+                                   일단은 분류기가 간단하게라도 동작하도록 구성함
+                                   https://www.youtube.com/watch?v=1i4I-Nph-Cw 의 동영상 설명대로 jar파일을 만들어넣음 */
+
+
+                                // 샘플 앱의 classification 버튼에 해당하는 부분
+//                                categoryList = classification.getCentroidClassifier().topK(3, inputText);
+//                                ArrayList categoryNames = new ArrayList();
+//                                for (SampleScoreData scoreData : categoryList) {
+//                                    int cID = scoreData.getID();
+//                                    double score = scoreData.getScore();
+//                                    String cNameOriginal = classification.getCentroidClassifier().getCategoryName(cID);
+//                                    categoryNames.add(cNameOriginal);
+//                                }
+//                                String resultCategory = mnClassifier.classifying((String[]) categoryNames.toArray(new String[categoryNames.size()]));
+//                                if (resultCategory != null) {
+//                                    textViewString = resultCategory + " (" + cNameConverter.convert(resultCategory) + ")";
+//                                } else {
+//                                    textViewString = "No matched category";
+//                                }
+//
+//                                DebugUtil.showToast(MainAct.this, textViewString);
+
+//                                /** 샘플 앱의 btn_classification_results 버튼에 해당하는 부분 **/
+//                                categoryList = classification.getCentroidClassifier().topK(10, inputText);
+//                                if (categoryList.size() > 0) textViewString = "";
+//                                for (SampleScoreData scoreData : categoryList) {
+//                                    int cID = scoreData.getID();
+//                                    double score = scoreData.getScore();
+//                                    String cNameOriginal = classification.getCentroidClassifier().getCategoryName(cID);
+//                                    String cName = cNameConverter.convert(cNameOriginal);
+//                                    textViewString = textViewString + "\n" + cNameOriginal + " (" + cName + ") : " + score + ":" + cID;
+//                                }
+//                                DebugUtil.showToast(MainAct.this, textViewString);
+
+//                                    DiLabClassifierUtil.classifyViewItems(MainAct.this, inputText, 3, root); //숫자 대신 숫자 값을 가진 변수 넣으면 된다
+//                                    DiLabClassifierUtil.classifyViewItems(inputText, root); //숫자 대신 숫자 값을 가진 변수 넣으면 된다
+
+
+                                FileUtil.classifyAllFiles(MainAct.this);
+
+                                break;
+
+                            case CommonDialog.NEGATIVE:
+                                DebugUtil.showDebug("MainAct, onOptionItemSelected(), case R.id.action_searching, case Negative ");
+                                DebugUtil.showToast(MainAct.this, "검색 취소");
+                                break;
+                        }
+                    }
+                }, Definitions.DIALOG_TYPE.SEARCHING, true, "검색", "취소", "확인");
+
+                dlgShow(newSearchDialog, "searching folder main");
+                break;
+
+            /** 정렬하기 **/
+            case R.id.action_arranging:
+                DebugUtil.showDebug("arranging");
+//                DebugUtil.showToast(this, "정렬하기 준비 중...");
+
+//                DebugUtil.showDebug(databaseHelper.selectQuery());
+                DebugUtil.showDebug(DatabaseCRUD.selectQuery());
+
+                break;
+
+            /** 폴더 추가하기 **/
+            case R.id.action_adding:
+                DebugUtil.showDebug("adding");
+
+                CommonDialog newFolderDialog = new CommonDialog();
+                newFolderDialog.setDialogSettings(new CommonDialogListener() {
+                    @Override
+                    public void onClickCommonDialog(DialogInterface dialog, int which, String newFolderName) {
+                        DebugUtil.showDebug("MainAct, onOptionsItemSelected(), case R.id.action_renaming : " + which);
+                        switch (which) {
+                            case CommonDialog.POSITIVE:
+                                DebugUtil.showToast(MainAct.this, currentPath + "/" + newFolderName + " 생성");
+                                String tmpNewFolderName = currentPath + "/" + newFolderName;
+                                File file = new File(tmpNewFolderName);
+                                if (!file.exists()) { // 원하는 경로에 폴더가 있는지 확인
+                                    file.mkdirs();
+                                } else {
+                                    DebugUtil.showToast(MainAct.this, "폴더 생성 실패");
+                                }
+
+                                setGridAdapter(MainAct.root);
+                                mViewItemAdapter.notifyDataSetChanged();
+
+                                break;
+                            case CommonDialog.NEGATIVE:
+                                DebugUtil.showToast(MainAct.this, "취소");
+                                break;
+                        }
+                    }
+                }, Definitions.DIALOG_TYPE.ADDING, true, "새 폴더", "취소", "생성하기");
+
+                dlgShow(newFolderDialog, "renaming folder main");
+
+                break;
+
+            /** 숨겨진 항목 보기
+             * 숨기는 방안 : .noMedia 파일을 넣어준다?
+             * 찾는 방안 : .noMedia 파일을 들어가서 제거해준다?
+             * 갤러리에만 그런지 일반적인 안드로이드 파일 구조에서도 그런지 알아볼 것
+             **/
+
+            case R.id.action_revealing:
+                DebugUtil.showDebug("revealing");
+                DebugUtil.showToast(this, "숨긴 학목 보기 준비 중...");
+                if (gridItems != null) {
+                    for (int i = 0; i < gridItems.size(); i++) {
+
+                    }
+                }
+                break;
+
+            /** states when long clicked */
+
+            /** 항목 삭제하기 */
+            case R.id.action_trash:
+                DebugUtil.showDebug("delete selected folder");
+
+                if (gridItems != null) {
+                    int removedCount = 0;
+                    String removedFileName = "";
+                    for (int i = 0; i < gridItems.size(); i++) {
+                        if (gridItems.get(i).getIsChecked()) {
+                            removedCount++;
+                            removedFileName += gridItems.get(i).getName() + ", ";
+                            FileUtil.removeDir(gridItems.get(i).getPath());
+                        }
+                    }
+                    DebugUtil.showToast(this, "지워진 항목 : " + removedFileName + "지워진 개수 : " + removedCount);
+                }
+
+                //Refresh current folder
+                setGridAdapter(MainAct.root);
+                mViewItemAdapter.notifyDataSetChanged();
+                break;
+
+            /** 숨기기 */
+            case R.id.action_concealing:
+                DebugUtil.showToast(this, "숨기기 준비 중...");
+                break;
+
+            /** 이름 변경하기  */
+            case R.id.action_renaming:
+                DebugUtil.showDebug("renaming");
+                int checkedFolderNum = 0;
+                int selectedIndex = 0;
+                if (gridItems != null) {
+                    for (int i = 0; i < gridItems.size(); i++) {
+                        if (gridItems.get(i).isDirectory() && gridItems.get(i).getIsChecked()) {
+                            checkedFolderNum++;
+                            selectedIndex = i;
+                        }
+                    }
+
+                    if (checkedFolderNum == 0 || checkedFolderNum > 1) {
+                        DebugUtil.showToast(this, "이름을 변경할 폴더를 하나만 선택해주세요");
+                        break;
+                    } else if (checkedFolderNum == 1) {
+                        final int tempSelectedIndex = selectedIndex;
+                        CommonDialog renamingDialog = new CommonDialog();
+                        renamingDialog.setDialogSettings(new CommonDialogListener() {
+                            @Override
+                            public void onClickCommonDialog(DialogInterface dialog, int which, String newFolderName) {
+                                DebugUtil.showDebug("MainAct, onOptionsItemSelected(), case R.id.action_renaming : " + which);
+                                switch (which) {
+                                    case CommonDialog.POSITIVE:
+                                        DebugUtil.showDebug("체크된 것의 이름은 " + gridItems.get(tempSelectedIndex).getName());
+                                        File filePre = new File(gridItems.get(tempSelectedIndex).getPath());
+                                        File fileNow = new File(gridItems.get(tempSelectedIndex).getParentPath() + "/" + newFolderName);
+
+                                        if (filePre.renameTo(fileNow)) {
+                                            DebugUtil.showToast(getApplicationContext(), "변경 성공 " + filePre.getName() + "->" + newFolderName);
+                                            DebugUtil.showDebug(filePre.getAbsolutePath());
+
+                                        } else {
+                                            DebugUtil.showToast(getApplicationContext(), "변경 실패");
+                                        }
+                                        setGridAdapter(MainAct.root);
+                                        mViewItemAdapter.notifyDataSetChanged();
+                                        break;
+                                    case CommonDialog.NEGATIVE:
+                                        DebugUtil.showToast(MainAct.this, "이름변경 취소");
+                                        break;
+                                }
+                            }
+                        }, Definitions.DIALOG_TYPE.RENAMING, true, "이름 변경", "취소", "변경하기");
+                        dlgShow(renamingDialog, "renaming folder main");
+                    }
+                }
+                break;
+            /** 앨범 커버 이미지 변경하기  */
+            case R.id.action_select_cover_image:
+                DebugUtil.showDebug("select cover image");
+                DebugUtil.showToast(this, "표지 바꾸기 준비 중...");
+                //선택 혹은 기본값을 선택할 수 있으며 기본값의 경우 선택된 디렉토리의 하위 사진들 중 맨 나중에 찍힌 사진이 커버 이미지가 됨
+                //필요한 것
+                // 1. 선택된 디렉토리가 하나인 경우에만 활성화되도록 해아한다
+                // 2. 메뉴를 하나 더 띄울 수 있게 하던지 커스텀 다이얼로그를 메뉴처럼 만들도로 하던지 하는 방법이 필요하다
+                // 3. 일단 기본값을 선택할 수 있도록 하위 항목의
+
+                break;
+
+            /** 모두 선택하기 **/
+            case R.id.action_select_all:
+                DebugUtil.showDebug("select all");
+
+                if (gridItems != null) {
+                    for (int i = 0; i < gridItems.size(); i++) {
+                        gridItems.get(i).setIsChecked(true);
+                    }
+                    mViewItemAdapter.notifyDataSetChanged();
+                }
+                break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    @Override
+    protected void onResume() {
+        DebugUtil.showDebug("MainAct, onResume(), To refresh when ViewItems are changed");
+        super.onResume();
+//임시방편
+//        setGridAdapter(root);
+//        mViewItemAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        DebugUtil.showDebug("MainAct, onDestroy");
+        DatabaseHelper.getInstacnce(this).close();
+        DebugUtil.showDebug("MainAct, onDestroy DatabaseHelper closed");
+    }
+
+    /**
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            /** 사진을 찍고 다시 MainAct로 돌아왔을 때 */
+            if (requestCode == ConstantUtil.MAINACT_REQUESTCODE_FOR_CAMERA_INTENT) {
+                DebugUtil.showDebug("MainAct, onActivityResult, requestcode : ConstantUtil.MAINACT_REQUESTCODE_FOR_CAMERA_INTENT");
+
+                mViewItemAdapter.notifyDataSetChanged();
+//                Uri curImageURI = data.getData();
+//                DebugUtil.showDebug("curImageURI : " + getRealPathFromURI(curImageURI));
+
+                if (data != null) {
+                    DebugUtil.showDebug("result = " + data.getExtras().get(android.provider.MediaStore.EXTRA_OUTPUT));
+                    Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
+                    if (thumbnail != null) {
+//                        ImageView Imageview = (ImageView) findViewById(R.id.imgview);
+//                        Imageview.setImageBitmap(thumbnail);
+                    }
+                } else {
+                    DebugUtil.showDebug("data : null");
+                }
+            }
+        }
+        if (resultCode != RESULT_OK) {
+            return;
+        }
+    }
+
+
+}

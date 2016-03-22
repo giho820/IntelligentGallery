@@ -1,0 +1,131 @@
+package kr.ac.korea.intelligentgallery.database;
+
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+import java.util.ArrayList;
+
+import kr.ac.korea.intelligentgallery.data.ViewItem;
+import kr.ac.korea.intelligentgallery.database.util.DatabaseConstantUtil;
+import kr.ac.korea.intelligentgallery.util.DebugUtil;
+
+public class DatabaseCRUD {
+
+    private static SQLiteDatabase sqLiteDatabase;
+    private static Cursor cursor;
+    private static String keyword;
+
+    public static boolean checkTable(DatabaseHelper databaseHelper, SQLiteDatabase sqLiteDatabase, String tableName) {
+
+        boolean flag = true;
+
+        if(sqLiteDatabase == null){
+            DebugUtil.showDebug("SQLiteDatabase is null");
+            flag = false;
+            return flag;
+        }
+
+        String sql_check_whether_table_exist_or_not = "SELECT count(*) as check_table FROM sqlite_master WHERE type='table' AND name='" + tableName + "'";
+        Cursor cursor = sqLiteDatabase.rawQuery(sql_check_whether_table_exist_or_not, null);
+        cursor.moveToFirst();
+
+        DebugUtil.showDebug("cursor count : " + cursor.getInt(cursor.getColumnIndex("check_table")));
+        if (cursor.getInt(cursor.getColumnIndex("check_table")) != 1) {
+            flag = false;
+        }
+        DebugUtil.showDebug("flag : " + flag);
+
+        return flag;
+
+    }
+
+    public static void execRawQuery(String _query) {
+        DatabaseHelper.sqLiteDatabase.execSQL(_query);
+    }
+
+    public static String selectQuery() {
+
+        String result = "";
+
+        //역순으로 검색되도록 변경
+        cursor = DatabaseHelper.sqLiteDatabase.rawQuery("select * from " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME, null);
+        if (cursor == null)
+            return null;
+
+        while (cursor.moveToNext()) {
+            result += cursor.getInt(0)
+                    + ". "
+                    + cursor.getString(1)
+                    + " | "
+                    + cursor.getString(2)
+                    + " | "
+                    + cursor.getString(3)
+                    + " | "
+                    + cursor.getString(4)
+                    + "\n";
+        }
+
+        cursor.close();
+        return result;
+    }
+
+    public static void deleteAll() {
+        DatabaseHelper.sqLiteDatabase.delete(DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME, null, null);
+
+        // auto increment를 1부터 만들기 위한 작업
+        DatabaseHelper.sqLiteDatabase.execSQL("UPDATE SQLITE_SEQUENCE SET seq = 0 WHERE name = '" + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME + "';");
+    }
+
+    public static ArrayList<Integer> selectCategoryList(String selectSql) {
+        ArrayList<Integer> list = new ArrayList<>();
+
+        cursor = DatabaseHelper.sqLiteDatabase.rawQuery("PRAGMA case_sensitive_like = 'TRUE' ", null);
+        cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
+
+        if(cursor == null)
+            return null;
+
+        if(cursor.getCount() <= 0)
+            return null;
+
+        while (cursor.moveToNext()) {
+            int categoryID;
+            categoryID = cursor.getInt(0);
+            list.add(categoryID);
+        }
+
+        cursor.close();
+
+        return list;
+    }
+
+    public static ArrayList<ViewItem> getViewItemsWithSpecificCId(String selectSql) {
+        ArrayList<ViewItem> viewItemsWithSpecificCidViewItem = new ArrayList<>();
+
+        cursor = DatabaseHelper.sqLiteDatabase.rawQuery("PRAGMA case_sensitive_like = 'TRUE' ", null);
+        cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
+
+        if(cursor == null)
+            return null;
+
+        if(cursor.getCount() <= 0)
+            return null;
+
+        while (cursor.moveToNext()) {
+            ViewItem viewItem = new ViewItem();
+            viewItem.setIsDirectory(false);
+            viewItem.setPath(cursor.getString(1));
+            viewItem.setCategoryId(cursor.getInt(2));
+            viewItem.setIsChecked(false);
+            viewItem.setRank(cursor.getInt(3));
+            viewItem.setScore(cursor.getFloat(4));
+            viewItemsWithSpecificCidViewItem.add(viewItem);
+        }
+
+        cursor.close();
+
+        return viewItemsWithSpecificCidViewItem;
+    }
+
+
+}

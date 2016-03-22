@@ -1,0 +1,40 @@
+package com.example.dilab.sampledilabapplication.Sample.Models;
+
+
+public class SampleContentScoreData implements Comparable<SampleContentScoreData> {
+    private int contentID;
+    private double keywordScore;
+    private double graphScore;
+    private double finalScore;
+
+    public SampleContentScoreData(int contentId) {
+        this.contentID = contentId;
+        this.graphScore = 0;
+        this.finalScore = 0;
+    }
+
+    public int getID() {
+        return this.contentID;
+    }
+
+    public double getGraphScore() {
+        return this.graphScore;
+    }
+
+    public double getScore() {
+        return this.finalScore;
+    }
+
+
+    public void setGraphScore(double score) {
+        this.graphScore = score;
+    }
+
+    public void calculateFinalScores(double alpha) {
+        this.finalScore = (1.0f - alpha) * this.keywordScore + alpha * this.graphScore;
+    }
+
+    public int compareTo(SampleContentScoreData other) {
+        return this.finalScore > other.finalScore?-1:(this.finalScore < other.finalScore?1:0);
+    }
+}

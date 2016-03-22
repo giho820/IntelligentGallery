@@ -1,0 +1,73 @@
+package kr.ac.korea.intelligentgallery.util;
+
+import com.example.dilab.sampledilabapplication.Sample.Models.SampleScoreData;
+import com.example.dilab.sampledilabapplication.Sample.SampleCategoryNamingConverter;
+import com.example.dilab.sampledilabapplication.Sample.SampleCentroidClassifier;
+import com.example.dilab.sampledilabapplication.Sample.SampleDatabaseInitializer;
+import com.example.dilab.sampledilabapplication.Sample.SampleMNClassifier;
+import com.example.dilab.sampledilabapplication.Sample.SampleResourceInitializer;
+
+import java.util.ArrayList;
+
+import kr.ac.korea.intelligentgallery.database.DatabaseCRUD;
+import kr.ac.korea.intelligentgallery.database.DatabaseHelper;
+import kr.ac.korea.intelligentgallery.database.util.DatabaseConstantUtil;
+
+/**
+ * Created by kiho on 2016. 1. 25..
+ */
+public class DiLabClassifierUtil {
+    /* 분류기 관련 객체들
+        사용할 경우에 초기화 해주는 것이 성능상에 문제가 생기지 않는다고 함 */
+//    public static SampleClassification classification; // DiLabClassifierUtil에서 SampleClassification 부분은 전부 지워주신뒤
+    public static SampleCentroidClassifier centroidClassifier;
+    public static SampleMNClassifier mnClassifier;
+    public static SampleCategoryNamingConverter cNameConverter;
+    public static SampleDatabaseInitializer initializer;
+    public static SampleResourceInitializer luceneKoInitializer;
+
+
+    //topK의 K의 수 //상수화할 것 const
+    public static Integer K;
+
+    public static void classifyViewItems(DatabaseHelper databaseHelper, String inputText, String path) {
+
+
+        ArrayList<SampleScoreData> categoryList;
+        String textViewString = "";
+        int rank = 0;
+        /** inputText : 사용자가 검색 창에 입력한 텍스트 */
+        if (inputText == null || inputText.equals("")) {
+//            DebugUtil.showToast(context, "Please write input text" );
+        }
+
+        //이 과정이 시간걸림
+//        categoryList = classification.getCentroidClassifier().topK(K, inputText);
+        categoryList = centroidClassifier.topK(K, inputText); //classification.getCentroidClassifier().topK -> centroidClassifier.topK 로 바꾸시면 됩니다.
+
+        if (categoryList.size() > 0) textViewString = "";
+
+        String rawQuery = "insert into " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME + "(" + DatabaseConstantUtil.COLUMN_AUTO_INCREMENT_KEY +", "+ DatabaseConstantUtil.COLUMN_DID +", " + DatabaseConstantUtil.COLUMN_CATEGORY_ID +", " + DatabaseConstantUtil.COLUMN_RANK +", " + DatabaseConstantUtil.COLUMN_SCORE +") values ";
+
+        for (SampleScoreData scoreData : categoryList) {
+
+            int cID = scoreData.getID();
+            double score = scoreData.getScore();
+            String cNameOriginal = centroidClassifier.getCategoryName(cID);
+            String cName = cNameConverter.convert(cNameOriginal);
+
+            //inserting DB
+            textViewString = textViewString + "\n" + "id : " + path + "\n categoryId : "+ cID + "\n rank : " + rank + "\n categoryName : " + cNameOriginal + " (" + cName + ") : \n score: " + score;
+            DebugUtil.showDebug(textViewString);
+
+            if(rank == categoryList.size() -1)
+                rawQuery += "(null, '" + path +"', " + cID + ", " + rank + ", "+ score +");";
+            else
+                rawQuery += "(null, '" + path +"', " + cID + ", " + rank + ", "+ score +"),";
+
+            rank++;
+        }
+        DebugUtil.showDebug("DiLabClassifierUtil, classifyViewItems() rawQuery : " + rawQuery);
+        DatabaseCRUD.execRawQuery(rawQuery);
+    }
+}

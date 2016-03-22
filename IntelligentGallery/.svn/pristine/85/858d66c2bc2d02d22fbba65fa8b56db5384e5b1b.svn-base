@@ -1,0 +1,417 @@
+package kr.ac.korea.intelligentgallery.act;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.media.ExifInterface;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Parcelable;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ProgressBar;
+import android.widget.Toast;
+
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.assist.ImageScaleType;
+import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
+import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
+
+import java.io.IOException;
+import java.util.List;
+
+import kr.ac.korea.intelligentgallery.R;
+import kr.ac.korea.intelligentgallery.common.ParentAct;
+import kr.ac.korea.intelligentgallery.common.ViewPagerFixed;
+import kr.ac.korea.intelligentgallery.data.ViewItem;
+import kr.ac.korea.intelligentgallery.util.DebugUtil;
+import kr.ac.korea.intelligentgallery.util.FileUtil;
+import kr.ac.korea.intelligentgallery.util.TextUtil;
+import uk.co.senab.photoview.PhotoView;
+import uk.co.senab.photoview.PhotoViewAttacher;
+
+/**
+ * Created by kiho on 2015. 12. 22..
+ */
+public class GalleryAct extends ParentAct {
+
+    public static Context mContext;
+    public FrameLayout frameLayoutToolbarArea;
+    private Toolbar galleryToolbar;
+
+    public Integer selectedPostion;
+    public List<ViewItem> imagesInSameFolder;
+    public PhotoViewAttacher mAttacher;
+    public ViewItem currentViewItemImage; //현재 이미지 항목
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        mContext = this;
+        setContentView(R.layout.activity_gallery);
+
+        imagesInSameFolder = (List<ViewItem>) getIntent().getSerializableExtra("imageItems");
+        selectedPostion = getIntent().getIntExtra("selectedPostion", 0);
+//        DebugUtil.showDebug("GalleryAct, onCreate(), getIntent(), imageItems :" + imagesInSameFolder.size() + ", selectedPostion : " + selectedPostion);
+        //현재 이미지 항목
+        currentViewItemImage = imagesInSameFolder.get(selectedPostion);
+        DebugUtil.showDebug("GalleryAct, onCreate(), currentViewItemImage :" + currentViewItemImage.getPath());
+
+
+        //툴바를 감싸는 FrameLayout
+        frameLayoutToolbarArea = (FrameLayout) findViewById(R.id.framelayout_toolbar_gallery);
+
+        //툴바
+        galleryToolbar = (Toolbar) findViewById(R.id.toolbar_gallery);
+        //화면이 하나일때는 이렇게 쓰면된다
+        setSupportActionBar(galleryToolbar);
+
+        //툴바의 상단에 파일의 이름을 표기
+//        galleryToolbar.setTitle(FileUtil.getFileNameFromPath(imagesInSameFolder.get(selectedPostion).path));
+        getSupportActionBar().setTitle(FileUtil.getFileNameFromPath(imagesInSameFolder.get(selectedPostion).getPath()));
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getWindow().setStatusBarColor(Color.BLACK); //상태바의 색상 변경
+            galleryToolbar.setTitleTextColor(Color.WHITE);
+            galleryToolbar.setNavigationIcon(getDrawable(R.drawable.ic_backkey));
+        } else {
+            //getWindow().setStatusBarColor(Color.BLACK);//21버젼 아래에서는 변경불가
+            galleryToolbar.setTitleTextColor(getResources().getColor(R.color.c_ffffffff));
+            galleryToolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_backkey));
+        }
+
+
+        //뷰페이져
+        if (!TextUtil.isNull(imagesInSameFolder.get(selectedPostion).getPath())) {
+            ViewPagerFixed viewPager = (ViewPagerFixed) findViewById(R.id.pager_activity_gallery); //터치 이벤트를 막아서 뷰페이져 상에서의 스크롤과 포토뷰의 줌인/줌아웃이 원활하게 동작하게 하기 위함
+//            ViewPager viewPager = (ViewPager) findViewById(R.id.pager_activity_gallery);
+            viewPager.setAdapter(new ImageAdapter(this, imagesInSameFolder, selectedPostion));
+            viewPager.setCurrentItem(selectedPostion);
+
+//            viewPager.setOnPhotoViewClickedListener(new OnPhotoViewClickedListener() {
+//                @Override
+//                public void onPhotoViewClicked(boolean isClicked) {
+//                    if (isClicked) {
+//                        frameLayoutToolbarArea.setVisibility(View.VISIBLE);
+//                    } else {
+//                        frameLayoutToolbarArea.setVisibility(View.GONE);
+//                    }
+//                }
+//            });
+
+            viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+                @Override
+                public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+                }
+
+                @Override
+                public void onPageSelected(int position) {
+                    //툴바의 상단에 변경되는 파일의 이름을 표기
+                    getSupportActionBar().setTitle(FileUtil.getFileNameFromPath(imagesInSameFolder.get(position).getPath()));
+                    currentViewItemImage = imagesInSameFolder.get(position);
+                    DebugUtil.showDebug("GalleryAct, onCreate(), onPageSelected(), currentViewItemImage : " + currentViewItemImage.getPath());
+                }
+
+                @Override
+                public void onPageScrollStateChanged(int state) {
+
+                }
+            });
+        }
+
+    }
+
+    //해당 파일의 Exif정보를 보여준다
+    //추후 다이얼로그로 보기 좋게 표시해주도록 한다
+    public String getExifInfoOfSelectedPicture(String path) {
+        String result = "";
+        try {
+            ExifInterface exif = new ExifInterface(path);
+            StringBuilder builder = new StringBuilder();
+            DebugUtil.showDebug("FolderFrag, onCreate(), getExifInfoOfSelectedPicture() : " + path);
+
+            builder.append("Date & Time: " + getExifTag(exif, ExifInterface.TAG_DATETIME) + "\n");
+            builder.append("Flash: " + getExifTag(exif, ExifInterface.TAG_FLASH) + "\n");
+            builder.append("Focal Length: " + getExifTag(exif,ExifInterface.TAG_FOCAL_LENGTH) + "\n");
+            builder.append("GPS Datestamp: " + getExifTag(exif,ExifInterface.TAG_FLASH) + "\n");
+            builder.append("GPS Latitude: " + getExifTag(exif,ExifInterface.TAG_GPS_LATITUDE) + "\n");
+            builder.append("GPS Latitude Ref: " + getExifTag(exif,ExifInterface.TAG_GPS_LATITUDE_REF) + "\n");
+            builder.append("GPS Longitude: " + getExifTag(exif,ExifInterface.TAG_GPS_LONGITUDE) + "\n");
+            builder.append("GPS Longitude Ref: " + getExifTag(exif,ExifInterface.TAG_GPS_LONGITUDE_REF) + "\n");
+            builder.append("GPS Processing Method: " + getExifTag(exif,ExifInterface.TAG_GPS_PROCESSING_METHOD) + "\n");
+            builder.append("GPS Timestamp: " + getExifTag(exif,ExifInterface.TAG_GPS_TIMESTAMP) + "\n");
+            builder.append("Image Length: " + getExifTag(exif,ExifInterface.TAG_IMAGE_LENGTH) + "\n");
+            builder.append("Image Width: " + getExifTag(exif,ExifInterface.TAG_IMAGE_WIDTH) + "\n");
+            builder.append("Camera Make: " + getExifTag(exif,ExifInterface.TAG_MAKE) + "\n");
+            builder.append("Camera Model: " + getExifTag(exif,ExifInterface.TAG_MODEL) + "\n");
+            builder.append("Camera Orientation: " + getExifTag(exif,ExifInterface.TAG_ORIENTATION) + "\n");
+            builder.append("Camera White Balance: " + getExifTag(exif,ExifInterface.TAG_WHITE_BALANCE) + "\n");
+
+            result = builder.toString();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    private String getExifTag(ExifInterface exif,String tag){
+        String attribute = exif.getAttribute(tag);
+
+        return (null != attribute ? attribute : "");
+    }
+
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_folder_long_clicked, menu);
+//        return super.onCreateOptionsMenu(menu);
+        return true;
+    }
+
+    /**
+     * 메뉴 아이템 클릭
+     *
+     * @param item
+     * @return
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        DebugUtil.showDebug("GalleryAct, onOptionsItemSelected : " + item.getItemId());
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                DebugUtil.showDebug("GalleryAct, onOptionItemSelected, case android.R.id.home:");
+                finish();
+                return true;
+
+            case R.id.action_sharing:
+                DebugUtil.showToast(this, "공유하기");
+                return true;
+            case R.id.action_delete:
+                DebugUtil.showToast(this, "삭제하기");
+                FileUtil.removeDir(currentViewItemImage.getPath());
+                imagesInSameFolder.remove(selectedPostion);
+
+                finish();
+//                goToFolderCategoryAct(imagesInSameFolder.get(selectedPostion).getParentPath());
+
+//                if (imagesInFolder != null && imagesInFolder.size() > 0) {
+//                    int removedCount = 0;
+//                    String removedFileName = "";
+//                    for (int i = imagesInFolder.size() - 1 ; i >= 0 ; i--) {
+//                        if (selectedPositionsList.contains(i)) {
+//                            removedCount++;
+//                            DebugUtil.showDebug("deleting Process, selectedPositions : " + selectedPositions.toString());
+//                            DebugUtil.showDebug("deleting Process, removedCount : " + removedCount);
+//                            selectedPositions.remove(i);
+//                            DebugUtil.showDebug("deleting Process, 삭제 이전 : imagesInFolder.get(i).path : " + imagesInFolder.get(i).path);
+//                            FileUtil.removeDir(imagesInFolder.get(i).path);
+//                            imagesInFolder.remove(i);
+//
+//                        }
+//                    }
+//
+//                    //UI refresh 임시방안
+//                    selectedPositionsList.addAll(selectedPositions);
+//                    imageAdapter.notifyDataSetChanged();
+//                    imageAdapter = new ImageAdapter(folderCategoryAct, imagesInFolder);
+//                    gridViewFolderFrag.setAdapter(imageAdapter);
+//                    DebugUtil.showToast(folderCategoryAct, "지워진 개수 : " + removedCount);
+//                    for (int i = 0 ; i < imagesInFolder.size() ; i++) {
+//                        DebugUtil.showDebug("deleting Process, 삭제 이후 : imagesInFolder.get("+ i +").path : " + FileUtil.getFileNameFromPath(imagesInFolder.get(i).path));
+//                    }
+//                }
+
+                return true;
+            case R.id.action_detail:
+//                DebugUtil.showToast(this, "세부정보보기");
+
+                DebugUtil.showToast(this, getExifInfoOfSelectedPicture(currentViewItemImage.getPath()));
+                DebugUtil.showDebug(getExifInfoOfSelectedPicture(currentViewItemImage.getPath()));
+
+                return true;
+            case R.id.action_rotation:
+                return true;
+
+            case R.id.action_rotation_left90:
+                DebugUtil.showToast(this, "왼쪽 90도 회전하기");
+//                if (imagesInSameFolder != null && imagesInSameFolder.size() > 0) {
+//                    for (int i = 0; i < imagesInSameFolder.size(); i++) {
+//                        if (selectedPositionsList.contains(i)) {
+//                            final String path = imageAdapter.getItem(i).getPath();
+//                            DebugUtil.showDebug("i : " + i + ", path: " + path);
+//                            Bitmap bitmap = BitmapFactory.decodeFile(imageAdapter.getItem(i).getPath());
+//                            ImageUtil.SaveBitmapToFileCache(ImageUtil.GetRotatedBitmap(bitmap, 270), imageAdapter.getItem(i).getParentPath() + "/" + FileUtil.getFileNameFromPath(path));
+//
+//                            new Handler().postDelayed(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    DebugUtil.showDebug("회전 완료");
+//                                    //임시방안
+//                                    imageAdapter = new ImageAdapter(folderCategoryAct, imagesInFolder);
+//                                    gridViewFolderFrag.setAdapter(imageAdapter);
+//                                    //해결 중인 방안
+//////                                    imageAdapter.setItems(imagesInFolder);
+////                                    imageAdapter.onUiRefresh();
+//////                                    imageAdapter.notifyDataSetChanged();
+//                                }
+//                            }, 1000);
+//
+////                            getActivity().runOnUiThread(new Runnable() {
+////                                @Override
+////                                public void run() {
+////                                    imageAdapter.onUiRefresh();
+////                                }
+////                            });
+//
+////                            imageAdapter.setItems(imagesInFolder);
+//                        }
+//                    }
+//                }
+                return true;
+            case R.id.action_moving:
+                DebugUtil.showToast(this, "이동하기");
+
+                return true;
+            case R.id.action_copying:
+                DebugUtil.showToast(this, "복사하기");
+                return true;
+            case R.id.action_renaming:
+                DebugUtil.showToast(this, "이름바꾸기");
+                return true;
+            case R.id.action_viewing_in_map:
+                DebugUtil.showToast(this, "지도에서 위치보기");
+                return true;
+            default:
+                break;
+        }
+        return false;
+    }
+
+
+
+    //ImageAdapter
+    private class ImageAdapter extends PagerAdapter {
+
+        public List<ViewItem> items;
+
+        private LayoutInflater inflater;
+        private DisplayImageOptions options;
+
+
+        ImageAdapter(Context context, List<ViewItem> items, Integer position) {
+            inflater = LayoutInflater.from(context);
+            this.items = items;
+
+            options = new DisplayImageOptions.Builder()
+                    .showImageForEmptyUri(R.drawable.ic_empty)
+                    .showImageOnFail(R.drawable.ic_error)
+                    .resetViewBeforeLoading(true)
+                    .cacheInMemory(true)
+                    .cacheOnDisk(true)
+                    .imageScaleType(ImageScaleType.EXACTLY)
+                    .bitmapConfig(Bitmap.Config.RGB_565)
+                    .considerExifParams(true)
+                    .displayer(new FadeInBitmapDisplayer(300))
+                    .build();
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            container.removeView((View) object);
+        }
+
+        @Override
+        public int getCount() {
+            return items.size();
+        }
+
+        @Override
+        public Object instantiateItem(ViewGroup view, int position) {
+            View imageLayout = inflater.inflate(R.layout.item_pager_image, view, false);
+            assert imageLayout != null;
+            PhotoView imageView = (PhotoView) imageLayout.findViewById(R.id.image_gallery);
+            final ProgressBar spinner = (ProgressBar) imageLayout.findViewById(R.id.loading);
+            DebugUtil.showDebug("GalleryAct, ImageAdapter, real showing Item position : " + position + ", " + items.get(position).getName());
+
+            //ViewPagerFixed에서 터치 이벤트 막아두었기 때문에 먹히질 않음
+            imageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    DebugUtil.showDebug("ttttttttt");
+                }
+            });
+
+            // 사진 확대/축소 기능 추가
+            mAttacher = new PhotoViewAttacher(imageView);
+
+            ImageLoader.getInstance().displayImage("file://" + items.get(position).getPath(), imageView, options, new SimpleImageLoadingListener() {
+                @Override
+                public void onLoadingStarted(String imageUri, View view) {
+                    spinner.setVisibility(View.VISIBLE);
+                }
+
+                @Override
+                public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
+                    String message = null;
+                    switch (failReason.getType()) {
+                        case IO_ERROR:
+                            message = "Input/Output error";
+                            break;
+                        case DECODING_ERROR:
+                            message = "Image can't be decoded";
+                            break;
+                        case NETWORK_DENIED:
+                            message = "Downloads are denied";
+                            break;
+                        case OUT_OF_MEMORY:
+                            message = "Out Of Memory error";
+                            break;
+                        case UNKNOWN:
+                            message = "Unknown error";
+                            break;
+                    }
+                    Toast.makeText(view.getContext(), message, Toast.LENGTH_SHORT).show();
+
+                    spinner.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                    spinner.setVisibility(View.GONE);
+                }
+            });
+
+            view.addView(imageLayout, 0);
+            return imageLayout;
+        }
+
+        @Override
+        public boolean isViewFromObject(View view, Object object) {
+            return view.equals(object);
+        }
+
+        @Override
+        public void restoreState(Parcelable state, ClassLoader loader) {
+        }
+
+        @Override
+        public Parcelable saveState() {
+            return null;
+        }
+
+
+    }
+}
