@@ -67,7 +67,6 @@ public class DatabaseCRUD {
         }
         while (cursor.moveToNext()) {
             result = cursor.getInt(0);
-            DebugUtil.showDebug("DatabaseCRUD, deleted did::" + result);
         }
         cursor.close();
         return result;
@@ -121,6 +120,23 @@ public class DatabaseCRUD {
         }
 
         cursor.close();
+        return result;
+    }
+
+    public static ArrayList<Integer> getImagesIdsInInvertedIndexDb() {
+        ArrayList<Integer> result = new ArrayList<>();
+
+        cursor = DatabaseHelper.sqLiteDatabase.rawQuery("select distinct " + DatabaseConstantUtil.COLUMN_DID + " from " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME, null);
+
+        if (cursor == null)
+            return null;
+
+        while (cursor.moveToNext()) {
+            if (result != null && result.size() > cursor.getPosition())
+                result.add(cursor.getInt(0));
+        }
+        cursor.close();
+
         return result;
     }
 
@@ -180,6 +196,7 @@ public class DatabaseCRUD {
 
     /**
      * 카테고리 데이터베이스에 존재하는 카테고리 아이디들의 목록을 만든다
+     *
      * @return
      */
     public static ArrayList<Integer> selectCategoryList() {
@@ -263,13 +280,13 @@ public class DatabaseCRUD {
         cursor = DatabaseHelper.sqLiteDatabase.rawQuery("PRAGMA case_sensitive_like = 'TRUE' ", null);
         cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
 
-        if (cursor == null)
-            return null;
-
-        if (cursor.getCount() <= 0)
-            return null;
-
-        while (cursor.moveToNext()) {
+//        if (cursor == null)
+//            return null;
+//
+//        if (cursor.getCount() <= 0)
+//            return null;
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToNext();
             ImageFile imageFile = new ImageFile();
             imageFile.setIsDirectory(false);
             imageFile.setPath(cursor.getString(1));// 수정 됨;;(건내줄 때 반드시 변경할 것)
@@ -280,6 +297,7 @@ public class DatabaseCRUD {
             imageFile.setRecentImageFile(cursor.getString(1));
             viewItemsWithSpecificCidImageFile.add(imageFile);
         }
+
 
         cursor.close();
 

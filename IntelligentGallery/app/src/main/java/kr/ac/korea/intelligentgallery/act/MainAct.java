@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -35,6 +36,7 @@ import java.util.LinkedHashMap;
 import kr.ac.korea.intelligentgallery.R;
 import kr.ac.korea.intelligentgallery.adapter.AlbumAdapter;
 import kr.ac.korea.intelligentgallery.adapter.CategroyAdapter;
+import kr.ac.korea.intelligentgallery.asynctask.ClassifyingWhenExternalImagesExistAsyncTask;
 import kr.ac.korea.intelligentgallery.common.Definitions;
 import kr.ac.korea.intelligentgallery.common.ExpandableHeightGridView;
 import kr.ac.korea.intelligentgallery.common.ParentAct;
@@ -196,6 +198,16 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
 
         //카테고리 로드
         loadCategory();
+
+        if(FileUtil.getImagesHavingGPSInfoNotInInvertedIndex(this) != null){
+            //분류가 진행되지 않은 사진을 분류한다.
+            Integer notClassifiedImageCount = FileUtil.getImagesHavingGPSInfoNotInInvertedIndex(this).size();
+            DebugUtil.showDebug("MainAct, onResume(), notClassifiedImageCount:: " + notClassifiedImageCount);
+            if(notClassifiedImageCount >0){
+                new ClassifyingWhenExternalImagesExistAsyncTask(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, notClassifiedImageCount);
+            }
+        }
+
     }
 
 

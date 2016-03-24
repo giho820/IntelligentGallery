@@ -38,7 +38,6 @@ import kr.ac.korea.intelligentgallery.database.util.DatabaseConstantUtil;
 public class FileUtil {
 
 
-
     public static String getBucketIdFromImage(Context context, Uri uri) {
         String path = "";
         if (context == null) {
@@ -259,7 +258,7 @@ public class FileUtil {
 
         File newFile = new File(path);
         String fileName = "";
-        if(newFile.exists()){
+        if (newFile.exists()) {
             fileName = newFile.getName();
             DebugUtil.showDebug("FileUtil, getAlbumsInSepecficLocation::" + fileName);
         }
@@ -268,7 +267,7 @@ public class FileUtil {
         mCr = context.getContentResolver();
         Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         String[] projection = {MediaStore.Images.Media._ID, MediaStore.Images.Media.BUCKET_ID, MediaStore.Images.Media.BUCKET_DISPLAY_NAME, MediaStore.Images.Media.DATA};
-        String selection = MediaStore.Images.Media.DATA + " like '" + path+"%' and " + MediaStore.Images.Media.BUCKET_DISPLAY_NAME +" like '" + fileName+"'";
+        String selection = MediaStore.Images.Media.DATA + " like '" + path + "%' and " + MediaStore.Images.Media.BUCKET_DISPLAY_NAME + " like '" + fileName + "'";
         String orderBy = MediaStore.Images.Media.DEFAULT_SORT_ORDER; //폴더의 갯수가 정렬 기준, 지금은 앨범 알파벳, 가나다순 정렬
         Cursor cursor = mCr.query(uri, projection, selection, null, orderBy);
 
@@ -323,7 +322,7 @@ public class FileUtil {
         String selection = MediaStore.Images.Media.BUCKET_ID + "=" + albumID;
         String orderBy = FolderCategoryAct.imageOrderby;
         Cursor cursor = mCr.query(uri, projection, selection, null, orderBy);
-        while(cursor != null && cursor.moveToNext()){
+        while (cursor != null && cursor.moveToNext()) {
 
             result = cursor.getInt(0);
         }
@@ -370,8 +369,8 @@ public class FileUtil {
         String albumID = album.getId();
         String[] projection = {MediaStore.Images.Media._ID};
         String selection = MediaStore.Images.Media.BUCKET_ID + "=" + albumID;
-        String orderBy = MediaStore.Images.Media.DATE_TAKEN+ " desc"; //이미지가 찍힌 날짜 순서 정렬
-        Cursor cursor = mCr.query(uri, projection, selection, null,  orderBy + " limit " + start + ", " + limit);
+        String orderBy = MediaStore.Images.Media.DATE_TAKEN + " desc"; //이미지가 찍힌 날짜 순서 정렬
+        Cursor cursor = mCr.query(uri, projection, selection, null, orderBy + " limit " + start + ", " + limit);
 
         while (cursor.moveToNext()) {
             ImageFile imageFile = new ImageFile();
@@ -397,7 +396,7 @@ public class FileUtil {
         Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         String albumID = album.getId();
         String[] projection = {MediaStore.Images.Media._ID};
-        String selection = MediaStore.Images.Media.BUCKET_ID + "=" + albumID +" and " + MediaStore.Images.ImageColumns.LATITUDE + " is not null and " +  MediaStore.Images.ImageColumns.LONGITUDE + " is not null";
+        String selection = MediaStore.Images.Media.BUCKET_ID + "=" + albumID + " and " + MediaStore.Images.ImageColumns.LATITUDE + " is not null and " + MediaStore.Images.ImageColumns.LONGITUDE + " is not null";
         String orderBy = MediaStore.Images.Media.DATE_TAKEN; //이미지가 찍힌 날짜 순서 정렬
 //        Cursor cursor = mCr.query(uri, projection, selection, null, orderBy + " desc" + " limit 0, 30");
         Cursor cursor = mCr.query(uri, projection, selection, null, FolderCategoryAct.imageOrderby + " limit 0, 30");
@@ -421,10 +420,9 @@ public class FileUtil {
     public static ArrayList<ImageFile> getImagesHavingGPSInfoNotInInvertedIndex(Context context) {
 
         String selectSql = "SELECT DISTINCT " + DatabaseConstantUtil.COLUMN_DID +
-                " FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
-                + " WHERE " + DatabaseConstantUtil.COLUMN_RANK +"=0";
+                " FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME;
+//                + " WHERE " + DatabaseConstantUtil.COLUMN_RANK + "=0";
         Cursor subQueryCursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
-
 
 
         ContentResolver mCr;
@@ -436,7 +434,7 @@ public class FileUtil {
 
         String[] projection = {MediaStore.Images.Media._ID};
 
-        String selection = MediaStore.Images.ImageColumns.LATITUDE + " is not null and " +  MediaStore.Images.ImageColumns.LONGITUDE + " is not null";
+        String selection = MediaStore.Images.ImageColumns.LATITUDE + " is not null and " + MediaStore.Images.ImageColumns.LONGITUDE + " is not null";
         String orderBy = MediaStore.Images.Media.DATE_TAKEN; //이미지가 찍힌 날짜 순서 정렬
 //        Cursor cursor = mCr.query(uri, projection, selection, null, orderBy + " desc" + " limit 0, 30");
         Cursor cursor = mCr.query(uri, projection, selection, null, FolderCategoryAct.imageOrderby + " limit 0, 30");
@@ -457,7 +455,7 @@ public class FileUtil {
 
         imagesNotInInvertedIndexDb.addAll(images);
 
-        for(int i = 0; i < images.size(); i++) {
+        for (int i = 0; i < images.size(); i++) {
             if (subQueryCursor == null)
                 return null;
             if (subQueryCursor.getCount() <= 0)
@@ -469,9 +467,10 @@ public class FileUtil {
             while (subQueryCursor.moveToNext()) {
                 int did = subQueryCursor.getInt(0);
 //                DebugUtil.showDebug(FolderCategoryAct.ttttt + ", inverted 에 있는 did:: " + did);
-                if(images.get(i).getId() == did) {
+                if (images.get(i).getId() == did) {
 //                    DebugUtil.showDebug(FolderCategoryAct.ttttt + ", 이미 분류가 완료된 did :: " + did);
-                   imagesNotInInvertedIndexDb.remove(i);
+                    if (imagesNotInInvertedIndexDb != null && imagesNotInInvertedIndexDb.size() > i)
+                        imagesNotInInvertedIndexDb.remove(i);
                     break;
                 }
             }
@@ -480,7 +479,7 @@ public class FileUtil {
 
         DebugUtil.showDebug(FolderCategoryAct.ttttt + ", 분류가 안된 did 개수 :: " + imagesNotInInvertedIndexDb.size());
 
-        for(ImageFile imgfile : imagesNotInInvertedIndexDb){
+        for (ImageFile imgfile : imagesNotInInvertedIndexDb) {
             DebugUtil.showDebug(FolderCategoryAct.ttttt + ", 분류해야하는 아이디:: " + imgfile.getId());
         }
 
@@ -754,7 +753,7 @@ public class FileUtil {
 
         //미디어 스토리지 이용하는 방법
         ContentResolver mCr = context.getContentResolver();
-        Uri uri = Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI+"/"+_ID);
+        Uri uri = Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + _ID);
 
         String[] projection = {MediaStore.Images.ImageColumns.DATA};
 //        String selection = MediaStore.Images.Media._ID + "=" + _ID;
@@ -802,12 +801,12 @@ public class FileUtil {
         mCr = context.getContentResolver();
         Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
 
-        String[] projectionForAlbumImage = {MediaStore.Images.ImageColumns.DATA, MediaStore.Images.ImageColumns.LATITUDE, MediaStore.Images.ImageColumns.LONGITUDE};
-        String select = MediaStore.Images.ImageColumns.LATITUDE + " is not null and " +  MediaStore.Images.ImageColumns.LONGITUDE + " is not null";
+        String[] projectionForAlbumImage = {MediaStore.Images.ImageColumns._ID, MediaStore.Images.ImageColumns.DATA, MediaStore.Images.ImageColumns.LATITUDE, MediaStore.Images.ImageColumns.LONGITUDE};
+        String select = MediaStore.Images.ImageColumns.LATITUDE + " is not null and " + MediaStore.Images.ImageColumns.LONGITUDE + " is not null";
         Cursor cursor = mCr.query(uri, projectionForAlbumImage, select, null, null);
         while (cursor.moveToNext()) {
             result = cursor.getCount();
-            DebugUtil.showDebug("컬럼에 위도 경도 정보가 있는 이미지 전체 개수" + getColumeValue(cursor, projectionForAlbumImage[0]));
+            DebugUtil.showDebug("컬럼에 위도 경도 정보가 있는 이미지 전체::" + getColumeValue(cursor, projectionForAlbumImage[0]));
         }
         cursor.close();
         DebugUtil.showDebug("위도 경도를 가진 파일의 전체 개수  : " + result);
@@ -907,7 +906,7 @@ public class FileUtil {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
             File f = new File("file://" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES));
-            Uri contentUri = Uri.fromFile( f);
+            Uri contentUri = Uri.fromFile(f);
             mediaScanIntent.setData(contentUri);
             context.sendBroadcast(mediaScanIntent);
         } else {
@@ -1010,7 +1009,7 @@ public class FileUtil {
             DebugUtil.showDebug("FileUtil, fileName ::" + fileName);
 
             FileInputStream fin = new FileInputStream(src);
-            FileOutputStream fout = new FileOutputStream(dest+"/"+ fileName);
+            FileOutputStream fout = new FileOutputStream(dest + "/" + fileName);
 
             FileChannel inc = fin.getChannel();
             FileChannel outc = fout.getChannel();
@@ -1146,7 +1145,7 @@ public class FileUtil {
     }
 
     public static void callBroadCast(Context context) {
-        if(context == null) {
+        if (context == null) {
             DebugUtil.showDebug("설마 널? ");
             return;
         }
@@ -1174,7 +1173,7 @@ public class FileUtil {
         final Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
 
         final String[] projection = {MediaStore.Images.Media._ID, MediaStore.Images.Media.DATA, MediaStore.Images.Media.TITLE};
-        final String selection = MediaStore.Images.Media.TITLE + " like '%"+partial_file_name.toString()+"%'";
+        final String selection = MediaStore.Images.Media.TITLE + " like '%" + partial_file_name.toString() + "%'";
 //        final String[] selectionArgs = new String[]{partial_file_name};
 
         new Handler().postDelayed(new Runnable() {
@@ -1182,11 +1181,11 @@ public class FileUtil {
             public void run() {
 
                 Cursor c = mCr.query(uri, projection, selection, null, null);
-                DebugUtil.showDebug("[search] c.toString()::" +c.toString());
-                while (c.moveToNext()){
+                DebugUtil.showDebug("[search] c.toString()::" + c.toString());
+                while (c.moveToNext()) {
                     int id = c.getInt(c.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
                     results.add(id);
-                    DebugUtil.showDebug("[search] found, id:::::::"+id +", size::" + results.size());
+                    DebugUtil.showDebug("[search] found, id:::::::" + id + ", size::" + results.size());
                 }
 //                if (c.moveToFirst()) {
 //                    // We found the ID. Deleting the item via the content provider will also remove the file
