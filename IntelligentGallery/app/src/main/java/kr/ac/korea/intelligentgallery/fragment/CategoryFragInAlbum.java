@@ -2,8 +2,10 @@ package kr.ac.korea.intelligentgallery.fragment;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -27,6 +29,7 @@ import java.util.Set;
 
 import kr.ac.korea.intelligentgallery.R;
 import kr.ac.korea.intelligentgallery.act.FolderCategoryAct;
+import kr.ac.korea.intelligentgallery.act.SlideShowAct;
 import kr.ac.korea.intelligentgallery.adapter.CategoryFragInAlbumImageAdapter;
 import kr.ac.korea.intelligentgallery.common.ParentFrag;
 import kr.ac.korea.intelligentgallery.data.Album;
@@ -37,6 +40,7 @@ import kr.ac.korea.intelligentgallery.listener.OnBackPressedListener;
 import kr.ac.korea.intelligentgallery.util.DebugUtil;
 import kr.ac.korea.intelligentgallery.util.DiLabClassifierUtil;
 import kr.ac.korea.intelligentgallery.util.FileUtil;
+import kr.ac.korea.intelligentgallery.util.MoveActUtil;
 
 
 // FolderCategoryAct 안에 있는 CategroyFrag
@@ -51,8 +55,6 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
     public Album album; //메인 -> 앨범 영역에서 선택한 앨범
     public ArrayList<ImageFile> imagesInFolder = null; //앨범에 있는 이미지들의 정보가 담긴 리스트
     public ArrayList<Category> categories;
-    public ArrayList<Integer> categroyIDListCategoryFragInAlbum = null; //이미지들의 카테고리 id들이 담긴 리스트
-    public ArrayList<ImageFile> ImageFilesOfSpecificCategory = null;
 
     public Set<Integer> selectedPositions = null;
     public List<Integer> selectedPositionsList = null;
@@ -61,9 +63,7 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
     public ListView gridViewCategoryFrag;
     public CategoryFragInAlbumImageAdapter imageAdapter;
     public static ImageLoader imageLoader;
-    //Using PauseOnScrollListener To avoid grid scrolling lags
-    boolean pauseOnScroll = false; // or true
-    boolean pauseOnFling = false; // or false
+
     private GetImagesInCategory getImagesInCategory;
 
     public CategoryFragInAlbum() {
@@ -99,12 +99,11 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
         selectedPositions = new HashSet<>();
         selectedPositionsList = new ArrayList<>();
 
-//        categroyIDListCategoryFragInAlbum = new ArrayList<>();
-//        coverImageFilesCategoryFragInAlbum = new ArrayList<>();
         categories = new ArrayList<>();
 
 
         imageAdapter = new CategoryFragInAlbumImageAdapter(mContext, album);
+
         // if this is set true,
         // Activity.onCreateOptionsMenu will call Fragment.onCreateOptionsMenu
         // Activity.onOptionsItemSelected will call Fragment.onOptionsItemSelected
@@ -118,10 +117,6 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
 
         gridViewCategoryFrag = (ListView) view.findViewById(R.id.listViewCategory);
         gridViewCategoryFrag.setAdapter(imageAdapter);
-
-        //Using PauseOnScrollListener To avoid grid scrolling lags
-//        PauseOnScrollListener listener = new PauseOnScrollListener(imageLoader, pauseOnScroll, pauseOnFling);
-//        gridViewCategoryFrag.setOnScrollListener(listener);
 
         return view;
     }
@@ -145,7 +140,7 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         // Do something that differs the Activity's menu here
-        DebugUtil.showDebug("FolderFrag, onCreateOptionMenu() : ");
+        DebugUtil.showDebug("CategoryFragInAlbum, onCreateOptionMenu() : ");
         super.onCreateOptionsMenu(menu, inflater);
     }
 
@@ -165,7 +160,18 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
                 return true;
 
             case R.id.action_slide_show:
-                DebugUtil.showToast(folderCategoryAct, "슬라이드쇼 하기");
+//                DebugUtil.showToast(folderCategoryAct, "슬라이드쇼 하기");
+//                ArrayList<ImageFile> ImagesThatHaveGPSInfo =FileUtil.getImagesHavingGPSInfoInSpecificAlbum(mContext, album);
+//                DebugUtil.showDebug("ImagesThatHaveGPSInfo in folder ::" + ImagesThatHaveGPSInfo.size());
+//                for(ImageFile imageFile : ImagesThatHaveGPSInfo){
+//                    DebugUtil.showDebug("imageFile::" + imageFile.getPath());
+//                }
+
+                Intent intent2SlideShowAct = new Intent(mContext, SlideShowAct.class);
+                intent2SlideShowAct.putExtra("SlideShow Start Location is FolderFrag or CategoryFragInAlbum", 1);
+                intent2SlideShowAct.putExtra("albumFromFolderFrag", album);
+                MoveActUtil.moveActivity(folderCategoryAct, intent2SlideShowAct, -1, -1, false, false);
+
                 return true;
             case R.id.action_select_mode:
                 DebugUtil.showToast(folderCategoryAct, "다중 선택하기");
@@ -300,7 +306,7 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
 
         @Override
         protected void onPreExecute() {
-            DebugUtil.showDebug(TAG + "onPreExecute::");
+//            DebugUtil.showDebug(TAG + "onPreExecute::");
         }
 
         @Override
@@ -313,6 +319,8 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
 //                DebugUtil.showDebug(TAG + "imagesInFolder::size::" + imagesInFolder.size());
 
                 tempCategories = DatabaseCRUD.selectCategoryFragInAlbumCategoryList(imagesInFolder);//특정 폴더 내에 위치한 대표적인 카테고리 id의 리스트
+
+
 
                 if (tempCategories != null && tempCategories.size() > 0) {
 //                    DebugUtil.showDebug(TAG + "tempCategories::size::" + tempCategories.size());
@@ -328,6 +336,16 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
 
                 if (categories != null && categories.size() > 0) {
                     int currentCID;
+
+                    DiLabClassifierUtil.initializer = new SampleDatabaseInitializer(mContext);
+                    DiLabClassifierUtil.luceneKoInitializer = new SampleResourceInitializer();
+                    DiLabClassifierUtil.luceneKoInitializer.initialize(mContext);
+                    DiLabClassifierUtil.cNameConverter = new SampleCategoryNamingConverter(2);
+                    DiLabClassifierUtil.mnClassifier = new SampleMNClassifier(3, 2);
+                    DiLabClassifierUtil.centroidClassifier = SampleCentroidClassifier.getClassifier(DiLabClassifierUtil.initializer.getTargetPath(), "sigmaBase030.db");
+
+                    SampleClassification.initialize();
+
                     while(categories.size() != 0){
                         int i = 0;
                         currentCID = categories.get(i).getcID();
@@ -338,14 +356,7 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
                         Category newCategory = new Category();
                         newCategory.setcID(currentCID);
                         //카테고리 아이디를 이름으로 변환
-                        DiLabClassifierUtil.initializer = new SampleDatabaseInitializer(mContext);
-                        DiLabClassifierUtil.luceneKoInitializer = new SampleResourceInitializer();
-                        DiLabClassifierUtil.luceneKoInitializer.initialize(mContext);
-                        DiLabClassifierUtil.cNameConverter = new SampleCategoryNamingConverter(2);
-                        DiLabClassifierUtil.mnClassifier = new SampleMNClassifier(3, 2);
-                        DiLabClassifierUtil.centroidClassifier = SampleCentroidClassifier.getClassifier(DiLabClassifierUtil.initializer.getTargetPath(), "sigmaBase030.db");
 
-                        SampleClassification.initialize();
                         String cNameOriginal = DiLabClassifierUtil.centroidClassifier.getCategoryName(currentCID);
                         String cName = DiLabClassifierUtil.cNameConverter.convert(cNameOriginal);
 //                        DebugUtil.showDebug(TAG + "doInBackground::cName::" + cName);
@@ -374,6 +385,12 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
                     }
 //                    DebugUtil.showDebug(TAG + "doInBackground::after::categories::size::" + categories.size());
 //                    DebugUtil.showDebug(TAG + "doInBackground::newCategories::size::" + newCategories.size());
+
+
+                    //위치정보를 가지고 있으나 inverted Index db로 분류되지 않는 사진들을 분류하는 부분
+                    Log.d(FolderCategoryAct.ttttt, "" + FileUtil.getImagesHavingGPSInfoNotInInvertedIndex(mContext).size());
+
+
                 }
             }
 
@@ -396,7 +413,7 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
 
         @Override
         protected void onCancelled() {
-            DebugUtil.showDebug(TAG + "onCancelled::");
+//            DebugUtil.showDebug(TAG + "onCancelled::");
 
         }
     }
@@ -406,7 +423,7 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
         if (getImagesInCategory != null && !getImagesInCategory.isCancelled())
             getImagesInCategory.cancel(true);
 
-        DebugUtil.showDebug(TAG + "onPostExecute::");
+//        DebugUtil.showDebug(TAG + "onPostExecute::");
         getImagesInCategory = new GetImagesInCategory(mContext);
         getImagesInCategory.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }

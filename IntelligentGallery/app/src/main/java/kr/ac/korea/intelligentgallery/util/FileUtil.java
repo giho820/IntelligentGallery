@@ -29,6 +29,7 @@ import kr.ac.korea.intelligentgallery.act.MainAct;
 import kr.ac.korea.intelligentgallery.data.Album;
 import kr.ac.korea.intelligentgallery.data.ImageFile;
 import kr.ac.korea.intelligentgallery.database.DatabaseCRUD;
+import kr.ac.korea.intelligentgallery.database.DatabaseHelper;
 import kr.ac.korea.intelligentgallery.database.util.DatabaseConstantUtil;
 
 /**
@@ -388,6 +389,103 @@ public class FileUtil {
         return images;
     }
 
+    public static ArrayList<ImageFile> getImagesHavingGPSInfoInSpecificAlbum(Context context, Album album) {
+        ContentResolver mCr;
+        ArrayList<ImageFile> images = new ArrayList<>();
+
+        mCr = context.getContentResolver();
+        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        String albumID = album.getId();
+        String[] projection = {MediaStore.Images.Media._ID};
+        String selection = MediaStore.Images.Media.BUCKET_ID + "=" + albumID +" and " + MediaStore.Images.ImageColumns.LATITUDE + " is not null and " +  MediaStore.Images.ImageColumns.LONGITUDE + " is not null";
+        String orderBy = MediaStore.Images.Media.DATE_TAKEN; //이미지가 찍힌 날짜 순서 정렬
+//        Cursor cursor = mCr.query(uri, projection, selection, null, orderBy + " desc" + " limit 0, 30");
+        Cursor cursor = mCr.query(uri, projection, selection, null, FolderCategoryAct.imageOrderby + " limit 0, 30");
+
+        while (cursor.moveToNext()) {
+            ImageFile imageFile = new ImageFile();
+
+            Integer viewItemID = cursor.getInt(cursor.getColumnIndex(MediaStore.Images.Media._ID));
+            imageFile.setId(viewItemID);
+
+            String imageFileUriPath = FileUtil.getImagePath(context, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + viewItemID));
+            imageFile.setPath(imageFileUriPath);
+
+            images.add(imageFile);
+        }
+        cursor.close();
+
+        return images;
+    }
+
+    public static ArrayList<ImageFile> getImagesHavingGPSInfoNotInInvertedIndex(Context context) {
+
+        String selectSql = "SELECT DISTINCT " + DatabaseConstantUtil.COLUMN_DID +
+                " FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
+                + " WHERE " + DatabaseConstantUtil.COLUMN_RANK +"=0";
+        Cursor subQueryCursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
+
+
+
+        ContentResolver mCr;
+        ArrayList<ImageFile> images = new ArrayList<>();
+        ArrayList<ImageFile> imagesNotInInvertedIndexDb = new ArrayList<>();
+
+        mCr = context.getContentResolver();
+        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+
+        String[] projection = {MediaStore.Images.Media._ID};
+
+        String selection = MediaStore.Images.ImageColumns.LATITUDE + " is not null and " +  MediaStore.Images.ImageColumns.LONGITUDE + " is not null";
+        String orderBy = MediaStore.Images.Media.DATE_TAKEN; //이미지가 찍힌 날짜 순서 정렬
+//        Cursor cursor = mCr.query(uri, projection, selection, null, orderBy + " desc" + " limit 0, 30");
+        Cursor cursor = mCr.query(uri, projection, selection, null, FolderCategoryAct.imageOrderby + " limit 0, 30");
+
+        cursor.moveToFirst();
+        while (cursor.moveToNext()) {
+            ImageFile imageFile = new ImageFile();
+
+            Integer viewItemID = cursor.getInt(cursor.getColumnIndex(MediaStore.Images.Media._ID));
+            imageFile.setId(viewItemID);
+
+            String imageFileUriPath = FileUtil.getImagePath(context, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + viewItemID));
+            imageFile.setPath(imageFileUriPath);
+
+            images.add(imageFile);
+        }
+        cursor.close();
+
+        imagesNotInInvertedIndexDb.addAll(images);
+
+        for(int i = 0; i < images.size(); i++) {
+            if (subQueryCursor == null)
+                return null;
+            if (subQueryCursor.getCount() <= 0)
+                return null;
+
+//            DebugUtil.showDebug(FolderCategoryAct.ttttt + "images having gps info :: " + images.get(i).getId() + "======");
+
+            subQueryCursor.moveToFirst();
+            while (subQueryCursor.moveToNext()) {
+                int did = subQueryCursor.getInt(0);
+//                DebugUtil.showDebug(FolderCategoryAct.ttttt + ", inverted 에 있는 did:: " + did);
+                if(images.get(i).getId() == did) {
+//                    DebugUtil.showDebug(FolderCategoryAct.ttttt + ", 이미 분류가 완료된 did :: " + did);
+                   imagesNotInInvertedIndexDb.remove(i);
+                    break;
+                }
+            }
+        }
+        subQueryCursor.close();
+
+        DebugUtil.showDebug(FolderCategoryAct.ttttt + ", 분류가 안된 did 개수 :: " + imagesNotInInvertedIndexDb.size());
+
+        for(ImageFile imgfile : imagesNotInInvertedIndexDb){
+            DebugUtil.showDebug(FolderCategoryAct.ttttt + ", 분류해야하는 아이디:: " + imgfile.getId());
+        }
+
+        return imagesNotInInvertedIndexDb;
+    }
 
     public static ImageFile getSpecificImageInfo(Context context, Integer id) {
         ImageFile imageFile = new ImageFile();
@@ -709,7 +807,7 @@ public class FileUtil {
         Cursor cursor = mCr.query(uri, projectionForAlbumImage, select, null, null);
         while (cursor.moveToNext()) {
             result = cursor.getCount();
-            DebugUtil.showDebug("컬럼에 위도 경도 정보가 있는 이미지지지지지지 " + getColumeValue(cursor, projectionForAlbumImage[0]));
+            DebugUtil.showDebug("컬럼에 위도 경도 정보가 있는 이미지 전체 개수" + getColumeValue(cursor, projectionForAlbumImage[0]));
         }
         cursor.close();
         DebugUtil.showDebug("위도 경도를 가진 파일의 전체 개수  : " + result);

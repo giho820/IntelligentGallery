@@ -175,6 +175,7 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
 
                 Intent intent2SlideShowAct = new Intent(mContext, SlideShowAct.class);
 //                intent2SlideShowAct.putExtra("albumFromFolderFrag", album.getPath());
+                intent2SlideShowAct.putExtra("SlideShow Start Location is FolderFrag or CategoryFragInAlbum", 0);
                 intent2SlideShowAct.putExtra("albumFromFolderFrag", album);
                 MoveActUtil.moveActivity(folderCategoryAct, intent2SlideShowAct, -1, -1, false, false);
 

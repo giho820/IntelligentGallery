@@ -12,6 +12,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
@@ -24,7 +25,6 @@ import kr.ac.korea.intelligentgallery.R;
 import kr.ac.korea.intelligentgallery.common.ParentAct;
 import kr.ac.korea.intelligentgallery.data.Album;
 import kr.ac.korea.intelligentgallery.data.ImageFile;
-import kr.ac.korea.intelligentgallery.fragment.CategoryFrag;
 import kr.ac.korea.intelligentgallery.fragment.CategoryFragInAlbum;
 import kr.ac.korea.intelligentgallery.fragment.FolderFrag;
 import kr.ac.korea.intelligentgallery.listener.OnBackPressedListener;
@@ -56,35 +56,43 @@ public class FolderCategoryAct extends ParentAct implements View.OnClickListener
     GetImagesInAlbum getImagesInAlbum;
     boolean scaning = false;
     int totalCountInAlbum;
+    int totalCountInAlbumHavingGpsInfo;
+
     int start = 0;
     int limit = 100;
 
-    public static String imageOrderby = MediaStore.Images.Media.DATE_TAKEN;
+    ArrayList<ImageFile> imageFilesNotClassified = new ArrayList<>();
 
+    public static String imageOrderby = MediaStore.Images.Media.DATE_TAKEN;
+    public final static String ttttt = "InsertingExternal";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_folder_category);
 
-        //MainAct, 폴더영역에서 클릭한 앨범 받아옴
-//        albumFromMainAct = (Album) getIntent().getSerializableExtra("album");
-
         pathFromMainAct = getIntent().getStringExtra("album_path");
         DebugUtil.showDebug("FolderCategoryAct, pathFromMainAct:: " + pathFromMainAct);
-        if(!TextUtil.isNull(pathFromMainAct)){
-        albumFromMainAct = FileUtil.getAlbumsInSepecficLocation(this, pathFromMainAct);
+
+        if (!TextUtil.isNull(pathFromMainAct)) {
+            albumFromMainAct = FileUtil.getAlbumsInSepecficLocation(this, pathFromMainAct);
             DebugUtil.showDebug("FolderCategoryAct, pathFromMainAct, albumBucket id :: " + albumFromMainAct.getId());
             totalCountInAlbum = FileUtil.getImagesCount(FolderCategoryAct.this, albumFromMainAct);
+            Log.d(ttttt, "totalCountInAlbum:: "+totalCountInAlbum);
+
+            totalCountInAlbumHavingGpsInfo = FileUtil.getImagesHavingGPSInfoInSpecificAlbum(this, albumFromMainAct).size();
+            Log.d(ttttt, "totalCountInAlbumHavingGpsInfo:: "+totalCountInAlbumHavingGpsInfo);
+
+            imageFilesNotClassified = FileUtil.getImagesHavingGPSInfoInSpecificAlbum(this, albumFromMainAct);
+            for(ImageFile imgfile : imageFilesNotClassified){
+                DebugUtil.showDebug(FolderCategoryAct.ttttt +",:: 위치정보가 있는 모든  아이디:: " + imgfile.getId());
+            }
+            DebugUtil.showDebug(FolderCategoryAct.ttttt + "====================================");
+
+
+
+
             getImagesInAlbum = new GetImagesInAlbum(FolderCategoryAct.this);
         }
-
-//        if (albumFromMainAct != null) {
-//            pathFromMainAct = albumFromMainAct.getPath();
-//        } else {
-//            DebugUtil.showDebug(TAG + "albumFromMainAct is null ");
-//        }
-
-
 
         //최상단의 툴바
         toolbar = (Toolbar) findViewById(R.id.toolbar_folder_category);
@@ -141,7 +149,7 @@ public class FolderCategoryAct extends ParentAct implements View.OnClickListener
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
 
-        if(getImagesInAlbum != null){
+        if (getImagesInAlbum != null) {
             getImagesInAlbum.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             folderFrag = new FolderFrag(albumFromMainAct, totalCountInAlbum);
             categoryFragInAlbum = new CategoryFragInAlbum(albumFromMainAct);
@@ -150,12 +158,11 @@ public class FolderCategoryAct extends ParentAct implements View.OnClickListener
 
     @Override
     protected void onDestroy() {
-        if(getImagesInAlbum != null) {
+        if (getImagesInAlbum != null) {
             getImagesInAlbum.cancel(true);
         }
         super.onDestroy();
     }
-
 
 
     // tab PagerAdapter
@@ -163,6 +170,7 @@ public class FolderCategoryAct extends ParentAct implements View.OnClickListener
         private String[] titleArray = {
                 "사진", "카테고리"
         };
+
         public MainPagerAdapter(FragmentManager fm) {
             super(fm);
         }
@@ -223,18 +231,27 @@ public class FolderCategoryAct extends ParentAct implements View.OnClickListener
     public boolean onCreateOptionsMenu(Menu menu) {
         DebugUtil.showDebug("FolderCategoryAct, onCreateOptionsMenu() : ");
         MenuInflater inflater = getMenuInflater();
-        if (FolderFrag.isLongClicked) {
-            if (!CategoryFrag.isLongClicked)
-                inflater.inflate(R.menu.menu_folder_long_clicked, menu);
-            else
-                inflater.inflate(R.menu.menu_folder, menu);
-        }
+
         if (!FolderFrag.isLongClicked) {
-            if (!CategoryFrag.isLongClicked)
-                inflater.inflate(R.menu.menu_category, menu);
-            else
-                inflater.inflate(R.menu.menu_category_long_clicked, menu);
+            inflater.inflate(R.menu.menu_folder, menu);
         }
+        if (FolderFrag.isLongClicked) {
+            inflater.inflate(R.menu.menu_folder_long_clicked, menu);
+        }
+
+//        if (!FolderFrag.isLongClicked) {
+//            if (!CategoryFragInAlbum.isLongClicked)
+//                inflater.inflate(R.menu.menu_folder, menu);
+//            else
+//                inflater.inflate(R.menu.menu_category_long_clicked, menu);
+//        }
+//        if (FolderFrag.isLongClicked) {
+//            if (!CategoryFragInAlbum.isLongClicked)
+//                inflater.inflate(R.menu.menu_folder_long_clicked, menu);
+//            else
+//                inflater.inflate(R.menu.menu_folder, menu);
+//        }
+
         return true;
     }
 
@@ -295,9 +312,9 @@ public class FolderCategoryAct extends ParentAct implements View.OnClickListener
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode == RESULT_OK){
-            if(requestCode == ConstantUtil.GALLERYACT_REQUESTCODE_FOR_IMAGES_REFRESH){
-                ArrayList<ImageFile> images = (ArrayList<ImageFile>)data.getSerializableExtra("imagesInSameFolder");
+        if (resultCode == RESULT_OK) {
+            if (requestCode == ConstantUtil.GALLERYACT_REQUESTCODE_FOR_IMAGES_REFRESH) {
+                ArrayList<ImageFile> images = (ArrayList<ImageFile>) data.getSerializableExtra("imagesInSameFolder");
                 Integer imageSize = data.getIntExtra("imagesInSameFoder_Count", 0);
                 DebugUtil.showDebug("FolderCategoryAct, images::" + imageSize);
                 DebugUtil.showDebug("Bucket id :: " + data.getStringExtra("bucketid"));

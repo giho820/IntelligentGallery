@@ -180,7 +180,6 @@ public class DatabaseCRUD {
 
     /**
      * 카테고리 데이터베이스에 존재하는 카테고리 아이디들의 목록을 만든다
-     *
      * @return
      */
     public static ArrayList<Integer> selectCategoryList() {
@@ -217,9 +216,9 @@ public class DatabaseCRUD {
         if (list == null) {
             return null;
         }
-        DebugUtil.showDebug(TAG + "list::size::" + list.size());
+//        DebugUtil.showDebug(TAG + "list::size::" + list.size());
         for (ImageFile ifs : list) {
-            DebugUtil.showDebug(TAG + "ifs::" + ifs.getId());
+//            DebugUtil.showDebug(TAG + "ifs::" + ifs.getId());
 
             //대표적인 카테고리 아이디를 검색하는 쿼리
             String selectSql = "SELECT " + DatabaseConstantUtil.COLUMN_CATEGORY_ID +

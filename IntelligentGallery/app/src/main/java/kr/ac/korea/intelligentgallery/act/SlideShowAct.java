@@ -27,6 +27,7 @@ import kr.ac.korea.intelligentgallery.util.ImageUtil;
  * Created by kiho on 2016. 3. 3..
  */
 public class SlideShowAct extends Activity {
+    private int whichFragThatStartsSlideShow;
     private Album album;
     private ArrayList<ImageFile> imageFiles;
     private ViewFlipper myViewFlipper;
@@ -54,28 +55,19 @@ public class SlideShowAct extends Activity {
         myViewFlipper.setFlipInterval(3000);
         myViewFlipper.startFlipping();
 
-
+        whichFragThatStartsSlideShow = getIntent().getIntExtra("SlideShow Start Location is FolderFrag or CategoryFragInAlbum", 0);
         album = (Album) getIntent().getSerializableExtra("albumFromFolderFrag");
 //        String albumPath = getIntent().getStringExtra("albumFromFolderFrag");
 //        album = FileUtil.getAlbumsInSepecficLocation(this, albumPath);
 
         if (album != null) {
 //            imageFiles = FileUtil.getImages(this, album);
-
             new MakingViewFlipperItemsInSlideShow().execute();
 
-
         } else {
-            DebugUtil.showDebug("SlideshowAct, onCreate(), Album");
+            DebugUtil.showDebug("SlideshowAct, onCreate(), album is null:");
         }
 
-//        for (int i = 0; i < imageFiles.size(); i++) {
-//            ImageView imageView = new ImageView(SlideShowAct.this);
-//
-//            Bitmap bmp = ImageLoader.getInstance().loadImageSync(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + imageFiles.get(i).getId());
-//            imageView.setImageBitmap(bmp);
-//            myViewFlipper.addView(imageView);
-//        }
     }
 
     @Override
@@ -112,6 +104,7 @@ public class SlideShowAct extends Activity {
         @Override
         protected Integer doInBackground(Integer... params) {
             ContentResolver mCr;
+            Cursor cursor;
             ArrayList<ImageFile> images = new ArrayList<>();
 
             mCr = SlideShowAct.this.getContentResolver();
@@ -119,8 +112,13 @@ public class SlideShowAct extends Activity {
             String albumID = album.getId();
             String[] projection = {MediaStore.Images.Media._ID};
             String selection = MediaStore.Images.Media.BUCKET_ID + "=" + albumID;
+            String selectionWhenCategoryFragInAlbum = MediaStore.Images.Media.BUCKET_ID + "=" + albumID +" and " + MediaStore.Images.ImageColumns.LATITUDE + " is not null and " +  MediaStore.Images.ImageColumns.LONGITUDE + " is not null";
             String orderBy = MediaStore.Images.Media.DATE_TAKEN; //이미지가 찍힌 날짜 순서 정렬
-            Cursor cursor = mCr.query(uri, projection, selection, null, orderBy + " desc" + " limit 0, 30");
+            if(whichFragThatStartsSlideShow == 0) {
+                cursor = mCr.query(uri, projection, selection, null, orderBy + " desc" + " limit 0, 30");
+            } else {
+                cursor = mCr.query(uri, projection, selectionWhenCategoryFragInAlbum, null, orderBy + " desc" + " limit 0, 30");
+            }
 
             while (cursor.moveToNext()) {
                 ImageFile imageFile = new ImageFile();

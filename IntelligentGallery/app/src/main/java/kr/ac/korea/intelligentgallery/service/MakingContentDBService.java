@@ -101,23 +101,25 @@ public class MakingContentDBService extends Service {
                 if (cursor == null) {
                     return 0;
                 }
+                //여기서 분류기 초기화
+                DiLabClassifierUtil.initializer = new SampleDatabaseInitializer(MakingContentDBService.this);
+                DiLabClassifierUtil.luceneKoInitializer = new SampleResourceInitializer();
+                DiLabClassifierUtil.luceneKoInitializer.initialize(MakingContentDBService.this);
+                DiLabClassifierUtil.cNameConverter = new SampleCategoryNamingConverter(2);
+                DiLabClassifierUtil.mnClassifier = new SampleMNClassifier(3, 2);
+                DiLabClassifierUtil.centroidClassifier = SampleCentroidClassifier.getClassifier(DiLabClassifierUtil.initializer.getTargetPath(), "sigmaBase030.db");
+
+                SampleClassification.initialize();
+                DiLabClassifierUtil.K = 5;
+
                 while (cursor.moveToNext()) {
 
                     Integer imageId = cursor.getInt(cursor.getColumnIndex(projection[0]));
                     String imagePath = cursor.getString(cursor.getColumnIndex(projection[1]));
+                    String imageFileUriPath = FileUtil.getImagePath(MakingContentDBService.this, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + imageId));
                     String imageName = FileUtil.getFileNameFromPath(imagePath);
                     DebugUtil.showDebug("MakingContentDBService, ClassifyingUsingAsyncTask, ClassifyingUsingAsyncTask(), doInBackground, ImageId() : " + imageId + ", ImageName : " + imageName);
 
-                    //여기서 분류기 초기화
-                    DiLabClassifierUtil.initializer = new SampleDatabaseInitializer(MakingContentDBService.this);
-                    DiLabClassifierUtil.luceneKoInitializer = new SampleResourceInitializer();
-                    DiLabClassifierUtil.luceneKoInitializer.initialize(MakingContentDBService.this);
-                    DiLabClassifierUtil.cNameConverter = new SampleCategoryNamingConverter(2);
-                    DiLabClassifierUtil.mnClassifier = new SampleMNClassifier(3, 2);
-                    DiLabClassifierUtil.centroidClassifier = SampleCentroidClassifier.getClassifier(DiLabClassifierUtil.initializer.getTargetPath(), "sigmaBase030.db");
-
-                    SampleClassification.initialize();
-                    DiLabClassifierUtil.K = 5;
 
                     DebugUtil.showDebug("MakingContentDBService, " + imageName + " inserted 됨 ");
                     //특정 한 개의 이미지에 대해서 K 개의 카테고리를 생성하여 db에 insert하는 프로세스를 진행한다
@@ -129,7 +131,7 @@ public class MakingContentDBService extends Service {
                     imageFile.setName(imageName);
                     imageFile.setCategoryId((Integer) rank0CategoryInfoAboutImage.keySet().toArray()[0]);
                     imageFile.setCategoryName((String) rank0CategoryInfoAboutImage.values().toArray()[0]);
-                    String imageFileUriPath = FileUtil.getImagePath(MakingContentDBService.this, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + imageId));
+
                     imageFile.setPath(imageFileUriPath);
                     imageFile.setRecentImageFileID(imageId);
                     intent.putExtra("newImageFile", imageFile);
