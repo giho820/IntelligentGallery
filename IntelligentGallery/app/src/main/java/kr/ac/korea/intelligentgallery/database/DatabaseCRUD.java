@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import kr.ac.korea.intelligentgallery.act.FolderCategoryAct;
 import kr.ac.korea.intelligentgallery.data.Category;
 import kr.ac.korea.intelligentgallery.data.ImageFile;
 import kr.ac.korea.intelligentgallery.database.util.DatabaseConstantUtil;
@@ -126,15 +127,17 @@ public class DatabaseCRUD {
     public static ArrayList<Integer> getImagesIdsInInvertedIndexDb() {
         ArrayList<Integer> result = new ArrayList<>();
 
-        cursor = DatabaseHelper.sqLiteDatabase.rawQuery("select distinct " + DatabaseConstantUtil.COLUMN_DID + " from " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME, null);
+        cursor = DatabaseHelper.sqLiteDatabase.rawQuery("select distinct " + DatabaseConstantUtil.COLUMN_DID + " from " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
+                + " where "+DatabaseConstantUtil.COLUMN_RANK +"=0", null);
 
-        if (cursor == null)
-            return null;
-
-        while (cursor.moveToNext()) {
-            if (result != null && result.size() > cursor.getPosition())
+        cursor.moveToFirst();
+        while (cursor != null && cursor.moveToNext()) {
+//            if (cursor.getCount() >0 && result.size() > cursor.getPosition())
+            if (cursor.getCount() > 0)
                 result.add(cursor.getInt(0));
+            DebugUtil.showDebug(FolderCategoryAct.ttttt + ", DatabaseCRUD, getImagesIdsInInvertedIndexDb(), added did in result : " + cursor.getInt(0));
         }
+
         cursor.close();
 
         return result;
@@ -230,6 +233,7 @@ public class DatabaseCRUD {
         String TAG = "selectCategoryFragInAlbumCategoryList";
         ArrayList<ImageFile> list = imageFiles;
         ArrayList<Category> categoryArrayList = new ArrayList<>();
+
         if (list == null) {
             return null;
         }
@@ -243,16 +247,6 @@ public class DatabaseCRUD {
                     + " where " + DatabaseConstantUtil.COLUMN_DID + "=" + ifs.getId()
                     + " and " + DatabaseConstantUtil.COLUMN_RANK + "=0";
             Cursor cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
-
-//            if (cursor == null) {
-//                cursor.close();
-//                return null;
-//            }
-//            if (cursor.getCount() <= 0) {
-//                cursor.close();
-//                return null;
-//            }
-
             if (cursor != null && cursor.getCount() > 0) {
                 cursor.moveToFirst();
                 Category category = new Category();
@@ -277,7 +271,7 @@ public class DatabaseCRUD {
     public static ArrayList<ImageFile> getViewItemsWithSpecificCId(String selectSql) {
         ArrayList<ImageFile> viewItemsWithSpecificCidImageFile = new ArrayList<>();
 
-        cursor = DatabaseHelper.sqLiteDatabase.rawQuery("PRAGMA case_sensitive_like = 'TRUE' ", null);
+        Cursor cursor = DatabaseHelper.sqLiteDatabase.rawQuery("PRAGMA case_sensitive_like = 'TRUE' ", null);
         cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
 
 //        if (cursor == null)

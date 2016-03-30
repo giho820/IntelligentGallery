@@ -53,6 +53,7 @@ import kr.ac.korea.intelligentgallery.util.DebugUtil;
 import kr.ac.korea.intelligentgallery.util.DiLabClassifierUtil;
 import kr.ac.korea.intelligentgallery.util.FileUtil;
 import kr.ac.korea.intelligentgallery.util.MoveActUtil;
+import kr.ac.korea.intelligentgallery.util.SharedPreUtil;
 import kr.ac.korea.intelligentgallery.util.TextUtil;
 
 
@@ -82,7 +83,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
     private ArrayList<Album> albums;
     public static int GridViewFolderNumColumns = 3; //앨범 그리드 뷰 에서 한 줄에 보여줄 앨범의 갯수
 
-    public static String albumOrderBy = MediaStore.Images.Media.SIZE;
+    private String albumOrderBy = SharedPreUtil.getInstance().getSharedPrefs().getString(SharedPreUtil.ALBUM_ORDER_BY, MediaStore.Images.Media.SIZE);
 
     // 카테고리 그리드뷰
     private ExpandableHeightGridView mGridViewCategory;
@@ -97,6 +98,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
 
     //커버이미지 변경 대상
     int selectedIdxInCoverSelect = 0;
+
     /**
      * onCreate()
      *
@@ -199,15 +201,18 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
         //카테고리 로드
         loadCategory();
 
-        if(FileUtil.getImagesHavingGPSInfoNotInInvertedIndex(this) != null){
-            //분류가 진행되지 않은 사진을 분류한다.
-            Integer notClassifiedImageCount = FileUtil.getImagesHavingGPSInfoNotInInvertedIndex(this).size();
-            DebugUtil.showDebug("MainAct, onResume(), notClassifiedImageCount:: " + notClassifiedImageCount);
-            if(notClassifiedImageCount >0){
-                new ClassifyingWhenExternalImagesExistAsyncTask(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, notClassifiedImageCount);
+
+        //최초의 분류가 진행이 되고나서
+        if (SharedPreUtil.getInstance().getBooleanPreference(SharedPreUtil.IS_NOT_FIRST_TIME_TO_START_APP) == true) {
+            if (FileUtil.getImagesHavingGPSInfoNotInInvertedIndex(this) != null) {
+                //분류가 진행되지 않은 사진을 분류한다.
+                Integer notClassifiedImageCount = FileUtil.getImagesHavingGPSInfoNotInInvertedIndex(this).size();
+                DebugUtil.showDebug("MainAct, onResume(), notClassifiedImageCount:: " + notClassifiedImageCount);
+                if (notClassifiedImageCount > 0) {
+                    new ClassifyingWhenExternalImagesExistAsyncTask(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, notClassifiedImageCount);
+                }
             }
         }
-
     }
 
 
@@ -276,7 +281,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                     imageFileCategory.setIsDirectory(true);
                     imageFileCategoryList.add(imageFileCategory);
                 } else {
-                    DebugUtil.showDebug("MainAct, loadCategory(), representImageID, " + representImageID);
+                    DebugUtil.showDebug("MainAct, loadCategory(), representImageID, " + representImageID + ", cName::" + cName);
                 }
 
             }
@@ -290,6 +295,14 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
             }
 //
             tvCategorysNum.setText("" + gridItemsCategory.size());
+            tvCategorysNum.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    DebugUtil.showDebug("MainAct, loadCategory(), inverted index db check ::\n");
+                    DebugUtil.showDebug(DatabaseCRUD.selectQuery());
+                }
+            });
+
             mCategroyAdapterCategory = new CategroyAdapter(this, this, gridItemsCategory);
 //
 //            // Set the grid adapter
@@ -550,6 +563,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
             //정렬하기
             case R.id.action_arranging_orderby_abc:
                 albumOrderBy = MediaStore.Images.Media.BUCKET_DISPLAY_NAME;
+                SharedPreUtil.getInstance().putPreference(SharedPreUtil.ALBUM_ORDER_BY, MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
                 albums = FileUtil.getAlbums(this, albumOrderBy);
                 albumAdapter.removeAllAlbums();
                 albumAdapter.setAlbums(albums);
@@ -558,6 +572,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
 
             case R.id.action_arranging_orderby_size:
                 albumOrderBy = MediaStore.Images.Media.SIZE;
+                SharedPreUtil.getInstance().putPreference(SharedPreUtil.ALBUM_ORDER_BY, MediaStore.Images.Media.SIZE);
                 albums = FileUtil.getAlbums(this, albumOrderBy);
                 albumAdapter.removeAllAlbums();
                 albumAdapter.setAlbums(albums);
@@ -566,6 +581,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
 
             case R.id.action_arranging_orderby_data:
                 albumOrderBy = MediaStore.Images.Media.DATA;
+                SharedPreUtil.getInstance().putPreference(SharedPreUtil.ALBUM_ORDER_BY, MediaStore.Images.Media.DATA);
                 albums = FileUtil.getAlbums(this, albumOrderBy);
                 albumAdapter.removeAllAlbums();
                 albumAdapter.setAlbums(albums);
@@ -574,6 +590,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
 
             case R.id.action_arranging_orderby_date_added:
                 albumOrderBy = MediaStore.Images.Media.DATE_ADDED;
+                SharedPreUtil.getInstance().putPreference(SharedPreUtil.ALBUM_ORDER_BY, MediaStore.Images.Media.DATE_ADDED);
                 albums = FileUtil.getAlbums(this, albumOrderBy);
                 albumAdapter.removeAllAlbums();
                 albumAdapter.setAlbums(albums);
@@ -582,6 +599,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
 
             case R.id.action_arranging_orderby_date_taken:
                 albumOrderBy = MediaStore.Images.Media.DATE_TAKEN;
+                SharedPreUtil.getInstance().putPreference(SharedPreUtil.ALBUM_ORDER_BY, MediaStore.Images.Media.DATE_TAKEN);
                 albums = FileUtil.getAlbums(this, albumOrderBy);
                 albumAdapter.removeAllAlbums();
                 albumAdapter.setAlbums(albums);
@@ -733,14 +751,29 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                                 DebugUtil.showDebug("MainAct, onOptionsItemSelected(), case R.id.action_renaming : " + which);
                                 switch (which) {
                                     case CommonDialog.POSITIVE:
-                                        DebugUtil.showDebug("체크된 것의 이름은 " + albums.get(tempSelectedIndex).getName());
-                                        File filePre = new File(albums.get(tempSelectedIndex).getPath());
-                                        File fileNow = new File(filePre.getParentFile().getPath() + "/" + newFolderName);
+                                        String tag = "rename folder";
+                                        DebugUtil.showDebug(tag + ":: 체크된 것의 이름은 " + albums.get(tempSelectedIndex).getName());
+                                        final File filePre = new File(albums.get(tempSelectedIndex).getPath());
+                                        final File fileNow = new File(filePre.getParentFile().getPath() + "/" + newFolderName);
+
+                                        DebugUtil.showDebug(tag + ":: filePre " + filePre.getPath());
+                                        DebugUtil.showDebug(tag + ":: fileNow " + fileNow.getPath());
 
                                         if (filePre.renameTo(fileNow)) {
                                             DebugUtil.showToast(getApplicationContext(), "변경 성공 " + filePre.getName() + "->" + newFolderName);
                                             DebugUtil.showDebug(filePre.getAbsolutePath());
+
+//                                            new Handler(Looper.getMainLooper()).post(new Runnable() {
+//                                                @Override
+//                                                public void run() {
+                                            DebugUtil.showDebug("rename folder:: GalleryAct, before inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificAlbum(MainAct.this, albums.get(tempSelectedIndex).getId()));//업데이트 이전
+                                            FileUtil.updateAlbumName(MainAct.this, albums.get(tempSelectedIndex).getId(), fileNow.getPath());
+                                            DebugUtil.showDebug("rename folder:: GalleryAct, after inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificAlbum(MainAct.this, albums.get(tempSelectedIndex).getId()));//업데이트 이전
+
                                             sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(filePre)));
+//                                                }
+//                                            });
+
                                             onBackPressed();
                                             onResume();
                                         } else {
@@ -762,9 +795,9 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                 DebugUtil.showDebug("action_cover_basic");
                 int checkedNum = 0;
                 int selectedIdx = 0;
-                if(albums != null){
-                    for(int i = 0; i < albums.size(); i++) {
-                        if(albums.get(i).isChecked()){
+                if (albums != null) {
+                    for (int i = 0; i < albums.size(); i++) {
+                        if (albums.get(i).isChecked()) {
                             checkedNum++;
                             selectedIdx = i;
                         }
@@ -772,7 +805,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                     if (checkedNum == 0 || checkedNum > 1) {
                         DebugUtil.showToast(this, "커버 이미지를 변경할 폴더를 하나만 선택해주세요");
                         break;
-                    } else if(checkedNum == 1){
+                    } else if (checkedNum == 1) {
                         DebugUtil.showDebug("coverImages path:::" + albums.get(selectedIdx).getCoverImagePath());
                         int basicAlbumCoverId = FileUtil.getAlbumCoverImageIds(this, albums.get(selectedIdx));
                         DebugUtil.showDebug("coverImages id ::" + basicAlbumCoverId);
@@ -791,9 +824,9 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                 DebugUtil.showDebug("action_cover_select");
                 int checkedNum2 = 0;
 
-                if(albums != null){
-                    for(int i = 0; i < albums.size(); i++) {
-                        if(albums.get(i).isChecked()){
+                if (albums != null) {
+                    for (int i = 0; i < albums.size(); i++) {
+                        if (albums.get(i).isChecked()) {
                             checkedNum2++;
                             selectedIdxInCoverSelect = i;
                         }
@@ -801,7 +834,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                     if (checkedNum2 == 0 || checkedNum2 > 1) {
                         DebugUtil.showToast(this, "커버 이미지를 변경할 폴더를 하나만 선택해주세요");
                         break;
-                    } else if(checkedNum2 == 1){
+                    } else if (checkedNum2 == 1) {
                         DebugUtil.showDebug("coverImages path:::" + albums.get(selectedIdxInCoverSelect).getCoverImagePath());
 
                         Intent intent = new Intent(MainAct.this, SelectCoverAct.class);
@@ -828,7 +861,6 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                     albumAdapter.notifyDataSetChanged();
                 }
                 break;
-
 
 
         }
@@ -906,7 +938,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
 //                }
             }
 
-            if(requestCode == ConstantUtil.GALLERYACT_REQUESTCODE_FOR_SELECT_COVER_IMAGE){
+            if (requestCode == ConstantUtil.GALLERYACT_REQUESTCODE_FOR_SELECT_COVER_IMAGE) {
 //                int receivedId = data.getIntExtra("seletedCoverImageId", 0);
 //                String receivedPath = data.getStringExtra("seletedCoverImagePath");
 //

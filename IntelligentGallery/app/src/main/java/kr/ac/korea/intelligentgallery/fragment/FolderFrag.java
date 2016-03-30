@@ -44,6 +44,7 @@ import kr.ac.korea.intelligentgallery.util.ExifUtil;
 import kr.ac.korea.intelligentgallery.util.FileUtil;
 import kr.ac.korea.intelligentgallery.util.ImageUtil;
 import kr.ac.korea.intelligentgallery.util.MoveActUtil;
+import kr.ac.korea.intelligentgallery.util.SharedPreUtil;
 import kr.ac.korea.intelligentgallery.util.TextUtil;
 
 /**
@@ -193,57 +194,43 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
 
                 return true;
 
+            //정렬하기
             case R.id.action_arranging_orderby_abc:
-
                 FolderCategoryAct.imageOrderby = MediaStore.Images.Media.DEFAULT_SORT_ORDER + " desc";
+                SharedPreUtil.getInstance().putPreference(SharedPreUtil.FOLDER_CATEGORY_ORDER_BY, FolderCategoryAct.imageOrderby);
                 updatedImageFiles = FileUtil.getImages(folderCategoryAct, album);
                 imageAdapter.addItems(updatedImageFiles);
-
-//                categoryFragInAlbum.imageAdapter.addItems(updatedCategories);
-//                categoryFragInAlbum.setImagesInFolder(updatedImageFiles);
-
                 return true;
 
             case R.id.action_arranging_orderby_size:
-
                 FolderCategoryAct.imageOrderby = MediaStore.Images.Media.SIZE + " desc";
+                SharedPreUtil.getInstance().putPreference(SharedPreUtil.FOLDER_CATEGORY_ORDER_BY, FolderCategoryAct.imageOrderby);
                 updatedImageFiles = FileUtil.getImages(folderCategoryAct, album);
                 imageAdapter.addItems(updatedImageFiles);
-
-//                categoryFragInAlbum.imageAdapter.addItems(updatedCategories);
-//                categoryFragInAlbum.setImagesInFolder(updatedImageFiles);
                 return true;
 
             case R.id.action_arranging_orderby_data:
-
                 FolderCategoryAct.imageOrderby = MediaStore.Images.Media.DATA + " desc";
+                SharedPreUtil.getInstance().putPreference(SharedPreUtil.FOLDER_CATEGORY_ORDER_BY, FolderCategoryAct.imageOrderby);
                 updatedImageFiles = FileUtil.getImages(folderCategoryAct, album);
                 imageAdapter.addItems(updatedImageFiles);
-
-//                categoryFragInAlbum.imageAdapter.addItems(updatedCategories);
-//                categoryFragInAlbum.setImagesInFolder(updatedImageFiles);
                 return true;
 
             case R.id.action_arranging_orderby_date_added:
                 FolderCategoryAct.imageOrderby = MediaStore.Images.Media.DATE_ADDED + " desc";
+                SharedPreUtil.getInstance().putPreference(SharedPreUtil.FOLDER_CATEGORY_ORDER_BY, FolderCategoryAct.imageOrderby);
                 updatedImageFiles = FileUtil.getImages(folderCategoryAct, album);
                 imageAdapter.addItems(updatedImageFiles);
-
-//                categoryFragInAlbum.imageAdapter.addItems(updatedCategories);
-//                categoryFragInAlbum.setImagesInFolder(updatedImageFiles);
                 return true;
 
             case R.id.action_arranging_orderby_date_taken:
                 FolderCategoryAct.imageOrderby = MediaStore.Images.Media.DATE_TAKEN + " desc";
+                SharedPreUtil.getInstance().putPreference(SharedPreUtil.FOLDER_CATEGORY_ORDER_BY, FolderCategoryAct.imageOrderby);
                 updatedImageFiles = FileUtil.getImages(folderCategoryAct, album);
                 imageAdapter.addItems(updatedImageFiles);
-
-//                categoryFragInAlbum.imageAdapter.addItems(updatedCategories);
-//                categoryFragInAlbum.setImagesInFolder(updatedImageFiles);
                 return true;
 
-
-
+            //숨기기
             case R.id.action_concealing:
                 DebugUtil.showToast(folderCategoryAct, "숨기기");
                 return true;

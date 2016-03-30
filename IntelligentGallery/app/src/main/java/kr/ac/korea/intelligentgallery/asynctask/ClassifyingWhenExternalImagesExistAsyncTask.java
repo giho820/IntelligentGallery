@@ -68,7 +68,6 @@ public class ClassifyingWhenExternalImagesExistAsyncTask extends AsyncTask<Integ
                 DebugUtil.showDebug("ClassifyingWhenExternalImagesExistAsyncTask(), doInBackground, ImageId() : " + imageId + ", ImageName : " + imageName);
 
 
-                DebugUtil.showDebug("ClassifyingWhenExternalImagesExistAsyncTask(), " + imageName + " inserted 됨 ");
                 //특정 한 개의 이미지에 대해서 K 개의 카테고리를 생성하여 db에 insert하는 프로세스를 진행한다
                 ArrayList<Integer> ids = new ArrayList<>();
                 ids = DatabaseCRUD.getImagesIdsInInvertedIndexDb();
@@ -79,6 +78,7 @@ public class ClassifyingWhenExternalImagesExistAsyncTask extends AsyncTask<Integ
                     } else {
                         DebugUtil.showDebug("디비에 없음 분류해야함:: " + imageId);
 
+                        DebugUtil.showDebug("ClassifyingWhenExternalImagesExistAsyncTask(), " + imageName + " inserted 됨 ");
                         LinkedHashMap<Integer, String> rank0CategoryInfoAboutImage = DiLabClassifierUtil.classifySpecificImageFile("helloworld", imageId);//분류에 필요한 키워드의 경우 사진앱은 임의의 문자열
                         Intent intent = new Intent("android.intent.action.classifying");
                         ImageFile imageFile = new ImageFile();

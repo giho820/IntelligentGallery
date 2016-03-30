@@ -31,6 +31,7 @@ import kr.ac.korea.intelligentgallery.listener.OnBackPressedListener;
 import kr.ac.korea.intelligentgallery.util.ConstantUtil;
 import kr.ac.korea.intelligentgallery.util.DebugUtil;
 import kr.ac.korea.intelligentgallery.util.FileUtil;
+import kr.ac.korea.intelligentgallery.util.SharedPreUtil;
 import kr.ac.korea.intelligentgallery.util.TextUtil;
 
 /**
@@ -63,7 +64,8 @@ public class FolderCategoryAct extends ParentAct implements View.OnClickListener
 
     ArrayList<ImageFile> imageFilesNotClassified = new ArrayList<>();
 
-    public static String imageOrderby = MediaStore.Images.Media.DATE_TAKEN;
+    public static String imageOrderby = SharedPreUtil.getInstance().getSharedPrefs().getString(SharedPreUtil.FOLDER_CATEGORY_ORDER_BY, MediaStore.Images.Media.DATE_TAKEN);
+
     public final static String ttttt = "InsertingExternal";
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -1,6 +1,8 @@
 package kr.ac.korea.intelligentgallery.act;
 
 import android.app.AlertDialog;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -384,18 +386,26 @@ public class GalleryAct extends ParentAct {
                                     if (filePre.renameTo(fileNow)) {
                                         DebugUtil.showToast(GalleryAct.this, "변경 성공 " + filePre.getName() + "->" + fileNow.getName());
 
+                                        DebugUtil.showDebug("GalleryAct, case R.id.action_renaming before update DB _DATA::" + FileUtil.viewColumnInfoOfSpecificImageFile(GalleryAct.this, currentImageFileImage.getId()));//업데이트 이전
+                                        ContentResolver mCr = getContentResolver();
+                                        ContentValues values = new ContentValues();
+                                        values.put(MediaStore.Images.Media.DATA, fileNow.getAbsolutePath());
+                                        mCr.update(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values, MediaStore.Images.ImageColumns._ID +"=" + currentImageFileImage.getId(), null);
+                                        DebugUtil.showDebug("GalleryAct, case R.id.action_renaming after update DB _DATA::" + FileUtil.viewColumnInfoOfSpecificImageFile(GalleryAct.this, currentImageFileImage.getId()));//업데이트 이후
+
+                                        FileUtil.callBroadCast(mContext);
+
                                         currentImageFileImage.setPath(fileNow.getPath());
                                         imagesInSameFolder.get(selectedPostion).setName(fileNow.getName());
                                         imageAdapter.addItems(imagesInSameFolder);
                                         imageAdapter.notifyDataSetChanged();
-
-                                        FileUtil.callBroadCast(mContext);
 
                                         onBackPressed();
                                         onResume();
                                     } else {
                                         DebugUtil.showToast(GalleryAct.this, "변경 실패");
                                         onBackPressed();
+
                                         onResume();
                                     }
                                     break;
@@ -484,7 +494,7 @@ public class GalleryAct extends ParentAct {
             categoryList = DiLabClassifierUtil.centroidClassifier.topK(DiLabClassifierUtil.K, currentImageFileImage.getCategoryName());
             sampleContentScoreDataMaps = SampleSemanticMatching.getRelevantContents(categoryList);
 
-            if(sampleContentScoreDataMaps == null) {
+            if (sampleContentScoreDataMaps == null) {
                 return -1;
             }
 
@@ -801,44 +811,33 @@ public class GalleryAct extends ParentAct {
         if (resultCode == RESULT_OK) {
             if (requestCode == ConstantUtil.GALLERYACT_REQUESTCODE_FOR_MOVEACT) {
                 String destinationFolderPath = data.getStringExtra("pathFromMoveAct");
-                DebugUtil.showDebug("GalleryAct, onActivityResult() compare::" + currentImageFileImage.getParentPath() +"==???"+ destinationFolderPath);
+                DebugUtil.showDebug("GalleryAct, onActivityResult() compare::" + currentImageFileImage.getParentPath() + "==???" + destinationFolderPath);
 
                 if (!currentImageFileImage.getParentPath().equals(destinationFolderPath)) {
-//                    FileUtil.moveFile(currentImageFileImage.getPath(), destinationFolderPath);
-                    FileUtil.copyFile(currentImageFileImage.getPath(), destinationFolderPath);
 
+                    FileUtil.moveFile(currentImageFileImage.getPath(), destinationFolderPath);
+
+                    DebugUtil.showDebug("GalleryAct, before inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificImageFile(this, currentImageFileImage.getId()));//업데이트 이전
+                    ContentResolver mCr = getContentResolver();
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Images.Media.DATA, destinationFolderPath+"/"+new File(currentImageFileImage.getPath()).getName());
+                    mCr.update(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values, MediaStore.Images.ImageColumns._ID +"=" + currentImageFileImage.getId(), null);
+                    DebugUtil.showDebug("GalleryAct, after inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificImageFile(this, currentImageFileImage.getId()));//업데이트 이후
 
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    DatabaseCRUD.deleteSpecificIdQuery(currentImageFileImage.getId());
-                                    FileUtil.deleteImage(GalleryAct.this, currentImageFileImage.getPath());
-                                    imagesInSameFolder.remove(imagesInSameFolder.get(selectedPostion));
-
-                                    imageAdapter.setItems(imagesInSameFolder);
-
-//                                            if (selectedPostion < imagesInSameFolder.size()) {
-//                                                imageAdapter.setPosition(selectedPostion);
-//                                            } else {
-//                                                imageAdapter.setPosition(imagesInSameFolder.size() - 1);
-//                                            }
-                                    onBackPressed();
-                                }
-                            });
+                            onBackPressed();
                         }
                     }, 1000);
                 } else {
                     DebugUtil.showToast(this, "이동하려는 폴더가 현재 폴더와 같습니다");
                 }
-
             }
 
             if (requestCode == ConstantUtil.GALLERYACT_REQUESTCODE_FOR_COPYACT) {
                 String destinationFolderPath = data.getStringExtra("pathFromMoveAct");
-                DebugUtil.showDebug("GalleryAct, onActivityResult() compare::" + currentImageFileImage.getParentPath() +"==???"+ destinationFolderPath);
+                DebugUtil.showDebug("GalleryAct, onActivityResult() compare::" + currentImageFileImage.getParentPath() + "==???" + destinationFolderPath);
 
                 if (!currentImageFileImage.getParentPath().equals(destinationFolderPath)) {
 

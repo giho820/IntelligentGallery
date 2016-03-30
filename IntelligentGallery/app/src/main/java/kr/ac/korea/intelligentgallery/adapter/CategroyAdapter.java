@@ -23,6 +23,7 @@ import kr.ac.korea.intelligentgallery.R;
 import kr.ac.korea.intelligentgallery.act.CategoryAct;
 import kr.ac.korea.intelligentgallery.act.MainAct;
 import kr.ac.korea.intelligentgallery.data.ImageFile;
+import kr.ac.korea.intelligentgallery.database.DatabaseCRUD;
 import kr.ac.korea.intelligentgallery.util.DebugUtil;
 import kr.ac.korea.intelligentgallery.util.DiLabClassifierUtil;
 import kr.ac.korea.intelligentgallery.util.FileUtil;
@@ -116,6 +117,7 @@ public class CategroyAdapter extends BaseAdapter {
             int numItemsInsideClickedCId = FileUtil.itemsCountInsideCategory(item.getCategoryId());
             viewHolder.file_count.setText("" + numItemsInsideClickedCId);
         }
+
 
         viewHolder.folderThumbnail.setBackgroundColor(mContext.getResources().getColor(R.color.c_ff222222));
         if (item.getRecentImageFileID() != null) {

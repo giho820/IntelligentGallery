@@ -19,6 +19,10 @@ public class SharedPreUtil implements OnSharedPreferenceChangeListener {
 	// 컨텐츠(앨범과 각 항목 들)에 대한 디비를 생성하는 작업(분류기 작업)이 최초인지 결정하는 것
 	public final static String IS_NOT_FIRST_TIME_TO_START_APP = "Is_not_first_time_to_start_app";
 
+	//정렬하기 순서 기억하는 sharedPreference
+	public final static String ALBUM_ORDER_BY = "ALBUM_ORDER_BY";
+	public final static String FOLDER_CATEGORY_ORDER_BY = "FOLDER_CATEGORY_ORDER_BY";
+
 	public static SharedPreUtil getInstance() {
 		if (instance == null) {
 			instance = new SharedPreUtil();

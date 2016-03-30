@@ -29,7 +29,8 @@ public class DatabaseConstantUtil {
             DatabaseConstantUtil.COLUMN_DID + " text Not null, " +
             DatabaseConstantUtil.COLUMN_CATEGORY_ID + " Integer Not null, " +
             DatabaseConstantUtil.COLUMN_RANK + " integer Not null, " +
-            DatabaseConstantUtil.COLUMN_SCORE + " double Not null" +
+            DatabaseConstantUtil.COLUMN_SCORE + " double Not null, " +
+            "unique (" +DatabaseConstantUtil.COLUMN_DID +", "+ DatabaseConstantUtil.COLUMN_RANK + ")" +
             ");";
 
     public static final String CREATE_INTELLIGENT_GALLERY_CONTENT_ALBUM_TABLE = "create table " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_CONTENT_ALBUM_NAME + "(" +

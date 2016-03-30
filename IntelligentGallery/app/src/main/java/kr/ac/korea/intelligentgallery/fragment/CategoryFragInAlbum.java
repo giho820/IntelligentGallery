@@ -79,9 +79,9 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
     }
 
     public void setImagesInFolder(ArrayList<ImageFile> imagesInFolder) {
-        if(imagesInFolder == null)
+        if (imagesInFolder == null)
             return;
-        if(this.imagesInFolder == null)
+        if (this.imagesInFolder == null)
             this.imagesInFolder = new ArrayList<>();
         this.imagesInFolder.removeAll(this.imagesInFolder);
         this.imagesInFolder.addAll(imagesInFolder);
@@ -319,9 +319,6 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
 //                DebugUtil.showDebug(TAG + "imagesInFolder::size::" + imagesInFolder.size());
 
                 tempCategories = DatabaseCRUD.selectCategoryFragInAlbumCategoryList(imagesInFolder);//특정 폴더 내에 위치한 대표적인 카테고리 id의 리스트
-
-
-
                 if (tempCategories != null && tempCategories.size() > 0) {
 //                    DebugUtil.showDebug(TAG + "tempCategories::size::" + tempCategories.size());
 //                    if (categories == null) {
@@ -346,7 +343,7 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
 
                     SampleClassification.initialize();
 
-                    while(categories.size() != 0){
+                    while (categories.size() != 0) {
                         int i = 0;
                         currentCID = categories.get(i).getcID();
 //                        DebugUtil.showDebug(TAG + "doInBackground::currentCID::" + currentCID);
@@ -386,14 +383,11 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
 //                    DebugUtil.showDebug(TAG + "doInBackground::after::categories::size::" + categories.size());
 //                    DebugUtil.showDebug(TAG + "doInBackground::newCategories::size::" + newCategories.size());
 
-
-                    //위치정보를 가지고 있으나 inverted Index db로 분류되지 않는 사진들을 분류하는 부분
-                    Log.d(FolderCategoryAct.ttttt, "" + FileUtil.getImagesHavingGPSInfoNotInInvertedIndex(mContext).size());
-
-
                 }
             }
 
+            //위치정보를 가지고 있으나 inverted Index db로 분류되지 않는 사진들을 분류하는 부분
+            Log.d(FolderCategoryAct.ttttt, "" + FileUtil.getImagesHavingGPSInfoNotInInvertedIndex(mContext).size());
             return newCategories;
 
         }
