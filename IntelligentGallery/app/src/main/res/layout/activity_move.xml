@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorMajor"
+    android:orientation="vertical"
+    tools:context="kr.ac.korea.intelligentgallery.act.MoveAct">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar_move_act"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_52"
+        android:layout_gravity="top"
+        android:background="@drawable/act_main_toolbar"
+        app:popupTheme="@style/AppTheme.PopupOverlay"
+        app:theme="@style/AppTheme.AppBarOverlay"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+
+        <kr.ac.korea.intelligentgallery.common.ExpandableHeightGridView
+            android:id="@+id/gridViewMoveAct"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/dp_13.33"
+            android:background="@color/colorMajor"
+            android:gravity="center"
+            android:horizontalSpacing="@dimen/dp_2"
+            android:verticalSpacing="@dimen/dp_2"
+            android:padding="@dimen/dp_3"/>
+
+
+        </LinearLayout>
+
+    </ScrollView>
+</LinearLayout>

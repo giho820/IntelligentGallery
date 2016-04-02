@@ -1,0 +1,26 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.marvinlabs.widget.slideshow.demo.SlideShowActivity">
+
+    <ViewFlipper
+        android:id="@+id/myflipper"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:gravity="center"></ViewFlipper>
+
+    <!--<com.marvinlabs.widget.slideshow.SlideShowView-->
+    <!--android:id="@+id/slideshow"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--app:enableAutoAdvance="true"-->
+    <!--app:playlist="sequential"-->
+    <!--app:slideDuration="5000"-->
+    <!--app:transition="slideAndZoom"-->
+    <!--app:transitionDuration="750"-->
+    <!--/>-->
+
+
+</RelativeLayout>

@@ -1,0 +1,75 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="kr.ac.korea.intelligentgallery.act.FolderCategoryAct"
+    >
+
+
+    <item
+        android:id="@+id/action_sharing"
+        android:orderInCategory="100"
+        android:title="@string/action_sharing"
+        android:icon="@drawable/ic_menu_sharing"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_trash_confirm"
+        android:orderInCategory="100"
+        android:title="@string/action_delete"
+        android:icon="@drawable/ic_menu_trash"
+        app:showAsAction="always">
+        <menu>
+            <item
+                android:id="@+id/action_delete"
+                android:icon="@drawable/ic_menu_trash_confirm"
+                android:title="@string/action_delete_confirm"
+                app:showAsAction="always" />
+        </menu>
+    </item>
+
+
+
+    <item
+        android:id="@+id/action_detail"
+        android:orderInCategory="100"
+        android:title="@string/action_detail"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_rotation"
+        android:orderInCategory="100"
+        android:title="@string/action_rotation"
+        app:showAsAction="never">
+        <menu>
+            <item android:id="@+id/action_rotation_left90"
+                android:title="@string/action_rotation_left90" />
+            <item android:id="@+id/action_rotation_right90"
+                android:title="@string/action_rotation_right90" />
+            <item android:id="@+id/action_rotation_180"
+                android:title="@string/action_rotation_180" />
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/action_moving"
+        android:orderInCategory="100"
+        android:title="@string/action_moving"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_copying"
+        android:orderInCategory="100"
+        android:title="@string/action_copying"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_renaming"
+        android:orderInCategory="100"
+        android:title="@string/action_renaming"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_viewing_in_map"
+        android:orderInCategory="100"
+        android:title="@string/action_viewing_in_map"
+        app:showAsAction="never" />
+</menu>

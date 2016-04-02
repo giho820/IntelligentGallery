@@ -1,0 +1,74 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="kr.ac.korea.intelligentgallery.act.MainAct">
+
+    <item
+        android:id="@+id/action_searching"
+        android:icon="@drawable/ic_menu_search"
+        android:orderInCategory="100"
+        android:title="@string/action_searching"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_camera"
+        android:icon="@drawable/ic_menu_camera2"
+        android:orderInCategory="100"
+        android:title="@string/action_camera"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_view_count_in_one_row"
+        android:orderInCategory="100"
+        android:title="@string/action_view_count_in_one_row"
+        app:showAsAction="never">
+        <menu>
+            <item
+                android:id="@+id/action_column_num_2"
+                android:title="@string/action_column_num_2" />
+            <item
+                android:id="@+id/action_column_num_3"
+                android:title="@string/action_column_num_3" />
+            <item
+                android:id="@+id/action_column_num_4"
+                android:title="@string/action_column_num_4" />
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/action_arranging_main"
+        android:orderInCategory="100"
+        android:title="@string/action_arranging"
+        app:showAsAction="never">
+        <menu>
+            <item
+                android:id="@+id/action_arranging_orderby_abc"
+                android:title="@string/action_arranging_orderby_abc" />
+            <item
+                android:id="@+id/action_arranging_orderby_date_taken"
+                android:title="@string/action_arranging_orderby_date_taken" />
+            <item
+                android:id="@+id/action_arranging_orderby_date_added"
+                android:title="@string/action_arranging_orderby_date_added" />
+            <item
+                android:id="@+id/action_arranging_orderby_size"
+                android:title="@string/action_arranging_orderby_size" />
+            <item
+                android:id="@+id/action_arranging_orderby_data"
+                android:title="@string/action_arranging_orderby_data" />
+        </menu>
+    </item>
+
+
+    <item
+        android:id="@+id/action_adding"
+        android:orderInCategory="100"
+        android:title="@string/action_adding"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_revealing"
+        android:orderInCategory="100"
+        android:title="@string/action_revealing"
+        app:showAsAction="never" />
+
+</menu>

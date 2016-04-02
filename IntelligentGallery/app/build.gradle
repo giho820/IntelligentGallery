@@ -1,0 +1,34 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion '21.1.2'
+
+    defaultConfig {
+        applicationId "kr.ac.korea.intelligentgallery"
+        minSdkVersion 14
+        targetSdkVersion 21
+        versionCode 1
+        versionName "1.0"
+//        multiDexEnabled true
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    testCompile 'junit:junit:4.12'
+    compile 'com.android.support:appcompat-v7:21.0.0'
+    compile 'com.android.support:support-v4:21.0.0'
+    compile 'ch.acra:acra:4.7.0'
+    compile 'com.github.chrisbanes.photoview:library:1.2.4'
+    compile 'com.squareup.picasso:picasso:2.5.2'
+    compile 'com.marvinlabs:android-slideshow-widget-picasso-plugin:0.5.0'
+    compile 'com.android.support:recyclerview-v7:21.0.0'
+    compile 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
+}

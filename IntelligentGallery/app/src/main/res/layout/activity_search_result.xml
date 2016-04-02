@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorMajor"
+    android:orientation="vertical">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/dp_36.5"
+                android:background="@color/colorMajor">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="left|center_vertical"
+                    android:layout_marginLeft="@dimen/dp_10"
+                    android:text="키워드 검색 결과"
+                    android:textColor="@color/colorMajorText"
+                    android:textSize="@dimen/abc_text_size_medium_material" />
+
+
+                <TextView
+                    android:id="@+id/textViewKeywordSearchCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="@dimen/dp_20"
+                    android:layout_gravity="right|center"
+                    android:layout_marginRight="@dimen/dp_6.5"
+                    android:background="@drawable/round_rectangle"
+                    android:gravity="center"
+                    android:paddingLeft="@dimen/dp_10"
+                    android:paddingRight="@dimen/dp_10"
+                    android:text="0"
+                    android:textColor="#cecece"
+                    android:textSize="@dimen/abc_text_size_small_material" />
+            </FrameLayout>
+
+
+            <kr.ac.korea.intelligentgallery.common.ExpandableHeightGridView
+                android:id="@+id/gridViewKeywordSearch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:horizontalSpacing="@dimen/dp_2"
+                android:isScrollContainer="false"
+                android:padding="@dimen/dp_3"
+                android:stretchMode="columnWidth"
+                android:verticalSpacing="@dimen/dp_2" />
+
+
+            <LinearLayout
+                android:id="@+id/linearLayoutHidenSectionWhenSelectionMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/dp_36.5"
+                    android:background="@color/colorMajor">
+
+                    <TextView
+                        android:id="@+id/textViewCategory"
+                        android:layout_width="wrap_content"
+
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="left|center_vertical"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:text="시맨틱 검색 결과"
+                        android:textColor="@color/colorMajorText"
+                        android:textSize="@dimen/abc_text_size_medium_material" />
+
+                    <TextView
+                        android:id="@+id/textViewSymanticSearchCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="@dimen/dp_20"
+                        android:layout_gravity="right|center_vertical"
+                        android:layout_marginRight="@dimen/dp_6.5"
+                        android:background="@drawable/round_rectangle"
+                        android:gravity="center"
+                        android:paddingLeft="@dimen/dp_10"
+                        android:paddingRight="@dimen/dp_10"
+                        android:text="0"
+                        android:textColor="@color/colorMajorText"
+                        android:textSize="@dimen/abc_text_size_small_material" />
+
+                </FrameLayout>
+
+
+                <kr.ac.korea.intelligentgallery.common.ExpandableHeightGridView
+                    android:id="@+id/gridViewSemanticSearchResult"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/colorMajor"
+                    android:gravity="center"
+                    android:horizontalSpacing="@dimen/dp_2"
+                    android:padding="@dimen/dp_3"
+                    android:verticalSpacing="@dimen/dp_2" />
+
+            </LinearLayout>
+
+
+        </LinearLayout>
+    </ScrollView>
+
+
+</LinearLayout>
