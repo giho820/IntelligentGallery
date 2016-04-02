@@ -493,9 +493,9 @@ public class GalleryAct extends ParentAct {
 
             categoryList = DiLabClassifierUtil.centroidClassifier.topK(DiLabClassifierUtil.K, currentImageFileImage.getCategoryName());
             //1. top0 을 제외하고 top1부터 top5까지 들어간다
-            //2. top0 k의 경우 고정이 아니라 변경할 수 있도록 한다. 
-            //3. top1 ~ topk까지 리스트를 받아서 centroidClassifier에 넣어주어야한다. 
-            //걱정 되는 시나리오 : 사진이 아직 분류가 되지 않았는데 아무것도 안뜨는 경우의 시나리오 
+            //2. top0 k의 경우 고정이 아니라 변경할 수 있도록 한다.
+            //3. top1 ~ topk까지 리스트를 받아서 centroidClassifier에 넣어주어야한다.
+            //걱정 되는 시나리오 : 사진이 아직 분류가 되지 않았는데 아무것도 안뜨는 경우의 시나리오
 
             //분류기 객체가 초기화가 이루어졌는데 널이 아니라서 사용을 못하게 되는 경우가 가장 문제일 것 같다고 하심
             //싱글톤 패턴으로 널이 아닌 객체를 한번만 초기화하고 계속 들고디닐 수 있도록 해야한다. <- 싱글톤 패턴의 실제적인 적용
