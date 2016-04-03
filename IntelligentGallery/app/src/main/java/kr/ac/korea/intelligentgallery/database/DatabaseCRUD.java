@@ -3,9 +3,12 @@ package kr.ac.korea.intelligentgallery.database;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.example.dilab.sampledilabapplication.Sample.Models.SampleScoreData;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
+import kr.ac.korea.intelligentgallery.act.GalleryAct;
 import kr.ac.korea.intelligentgallery.data.Category;
 import kr.ac.korea.intelligentgallery.data.ImageFile;
 import kr.ac.korea.intelligentgallery.database.util.DatabaseConstantUtil;
@@ -316,4 +319,24 @@ public class DatabaseCRUD {
     }
 
 
+    public static ArrayList<SampleScoreData> getScoreDatasUsingDidThatSizeIsK(Integer currentImageFileImageId, Integer k) {
+        ArrayList<SampleScoreData> scoreDatas = new ArrayList<>();
+        String selectSql = "select * from " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
+                + " where " + DatabaseConstantUtil.COLUMN_DID + "=" + currentImageFileImageId
+                + " and " + DatabaseConstantUtil.COLUMN_RANK +" != 0";
+
+        cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
+
+        if(cursor.getCount() == 0l) {
+            DebugUtil.showDebug(GalleryAct.correctTopk +" DatabaseCRUD, getScoreDatasUsingDidThatSizeIsK, 이건 db에 없어서 쿼리 결과 없음");
+        }
+        while (cursor != null && cursor.moveToNext()) {//&& cursor.getCount() == k
+            int categoryId = cursor.getInt(2);
+            double score = cursor.getDouble(4);
+            SampleScoreData sampleScoreData = new SampleScoreData(categoryId, score);
+            DebugUtil.showDebug(GalleryAct.correctTopk +", cid:: " + sampleScoreData.getID() + " 's score:: " + sampleScoreData.getScore());
+            scoreDatas.add(sampleScoreData);
+        }
+        return scoreDatas;
+    }
 }
