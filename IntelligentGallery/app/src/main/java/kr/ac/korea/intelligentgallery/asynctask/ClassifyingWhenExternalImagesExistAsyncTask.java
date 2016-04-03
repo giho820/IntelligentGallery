@@ -46,13 +46,6 @@ public class ClassifyingWhenExternalImagesExistAsyncTask extends AsyncTask<Integ
     protected Integer doInBackground(Integer... params) {
         final int taskCnt = params[0];
         DebugUtil.showDebug("ClassifyingWhenExternalImagesExistAsyncTask(), doInBackground ");
-//여기서 분류기 초기화
-        DiLabClassifierUtil.initializer = new SampleDatabaseInitializer(mContext);
-        DiLabClassifierUtil.cNameConverter = new SampleCategoryNamingConverter(2);
-        DiLabClassifierUtil.mnClassifier = new SampleMNClassifier(3, 2);
-        DiLabClassifierUtil.centroidClassifier = SampleCentroidClassifier.getClassifier(DiLabClassifierUtil.initializer.getTargetPath(), "sigmaBase030.db");
-        DiLabClassifierUtil.K = 5; //const로 해서 변경할 수 없도록 처리해야한다.
-
 
         for (ImageFile imageFileNotInInvertedIndexDb : ImagesHavingGpsInfoButNotInInvertedIndexDB) {
             Integer imageId = imageFileNotInInvertedIndexDb.getId();

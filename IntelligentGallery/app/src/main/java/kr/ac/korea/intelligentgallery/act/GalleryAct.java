@@ -480,25 +480,11 @@ public class GalleryAct extends ParentAct {
             matchingResult = new ArrayList<Integer>();
             matchingResultImages = new ArrayList<ImageFile>();
 
-            // 분류기 초기화
-            DiLabClassifierUtil.initializer = new SampleDatabaseInitializer(GalleryAct.this);
-            DiLabClassifierUtil.cNameConverter = new SampleCategoryNamingConverter(2);
-            DiLabClassifierUtil.mnClassifier = new SampleMNClassifier(3, 2);
-            DiLabClassifierUtil.centroidClassifier = SampleCentroidClassifier.getClassifier(DiLabClassifierUtil.initializer.getTargetPath(), "sigmaBase030.db");
-            DiLabClassifierUtil.semanticMatching = new SemanticMatching(getApplicationContext());
-            DiLabClassifierUtil.K = 5; //const로 해서 변경할 수 없도록 처리해야한다.
-
-            System.out.println("===========0");
-            System.out.println(currentImageFileImage.getName());
-            System.out.println(currentImageFileImage.getCategoryName());
-            System.out.println(currentImageFileImage.getCategoryId());
-
 
             DebugUtil.showDebug(correctTopk + " , " + DiLabClassifierUtil.K);
             DebugUtil.showDebug(correctTopk + " , " + currentImageFileImage.getId());
 
 
-//            categoryList = DiLabClassifierUtil.centroidClassifier.topK(DiLabClassifierUtil.K, currentImageFileImage.getCategoryName());
             categoryList = DatabaseCRUD.getScoreDatasUsingDidThatSizeIsK(currentImageFileImage.getId(), DiLabClassifierUtil.K);
 
             //1. top0 을 제외하고 top1부터 top5까지 들어간다

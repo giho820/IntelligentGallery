@@ -8,16 +8,10 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
 
-import com.example.dilab.sampledilabapplication.Sample.SampleCategoryNamingConverter;
-import com.example.dilab.sampledilabapplication.Sample.SampleCentroidClassifier;
-import com.example.dilab.sampledilabapplication.Sample.SampleDatabaseInitializer;
-import com.example.dilab.sampledilabapplication.Sample.SampleMNClassifier;
-
 import java.util.LinkedHashMap;
 
 import kr.ac.korea.intelligentgallery.data.ImageFile;
 import kr.ac.korea.intelligentgallery.foursquare.Foursquare;
-import kr.ac.korea.intelligentgallery.intelligence.Ranker.SemanticMatching;
 import kr.ac.korea.intelligentgallery.util.DebugUtil;
 import kr.ac.korea.intelligentgallery.util.DiLabClassifierUtil;
 import kr.ac.korea.intelligentgallery.util.ExifUtil;
@@ -68,13 +62,6 @@ public class ClassifyingUsingAsyncTask extends AsyncTask<Integer, String, Intege
             if (cursor == null) {
                 return 0;
             }
-            //여기서 분류기 초기화
-            DiLabClassifierUtil.initializer = new SampleDatabaseInitializer(mContext);
-            DiLabClassifierUtil.cNameConverter = new SampleCategoryNamingConverter(2);
-            DiLabClassifierUtil.mnClassifier = new SampleMNClassifier(3, 2);
-            DiLabClassifierUtil.centroidClassifier = SampleCentroidClassifier.getClassifier(DiLabClassifierUtil.initializer.getTargetPath(), "sigmaBase030.db");
-            DiLabClassifierUtil.K = 5; //const로 해서 변경할 수 없도록 처리해야한다.
-
             while (cursor.moveToNext()) {
 
                 Integer imageId = cursor.getInt(cursor.getColumnIndex(projection[0]));

@@ -14,10 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
-import com.example.dilab.sampledilabapplication.Sample.SampleCategoryNamingConverter;
-import com.example.dilab.sampledilabapplication.Sample.SampleCentroidClassifier;
-import com.example.dilab.sampledilabapplication.Sample.SampleDatabaseInitializer;
-import com.example.dilab.sampledilabapplication.Sample.SampleMNClassifier;
 import com.nostra13.universalimageloader.core.ImageLoader;
 
 import java.util.ArrayList;
@@ -34,7 +30,6 @@ import kr.ac.korea.intelligentgallery.data.Album;
 import kr.ac.korea.intelligentgallery.data.Category;
 import kr.ac.korea.intelligentgallery.data.ImageFile;
 import kr.ac.korea.intelligentgallery.database.DatabaseCRUD;
-import kr.ac.korea.intelligentgallery.intelligence.Ranker.SemanticMatching;
 import kr.ac.korea.intelligentgallery.listener.OnBackPressedListener;
 import kr.ac.korea.intelligentgallery.util.DebugUtil;
 import kr.ac.korea.intelligentgallery.util.DiLabClassifierUtil;
@@ -332,12 +327,6 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
 
                 if (categories != null && categories.size() > 0) {
                     int currentCID;
-
-                    DiLabClassifierUtil.initializer = new SampleDatabaseInitializer(mContext);
-                    DiLabClassifierUtil.cNameConverter = new SampleCategoryNamingConverter(2);
-                    DiLabClassifierUtil.mnClassifier = new SampleMNClassifier(3, 2);
-                    DiLabClassifierUtil.centroidClassifier = SampleCentroidClassifier.getClassifier(DiLabClassifierUtil.initializer.getTargetPath(), "sigmaBase030.db");
-                    DiLabClassifierUtil.K = 5; //const로 해서 변경할 수 없도록 처리해야한다.
 
                     while (categories.size() != 0) {
                         int i = 0;

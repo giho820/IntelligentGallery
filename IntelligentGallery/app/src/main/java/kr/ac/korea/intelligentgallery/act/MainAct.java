@@ -20,10 +20,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.dilab.sampledilabapplication.Sample.Models.SampleScoreData;
-import com.example.dilab.sampledilabapplication.Sample.SampleCategoryNamingConverter;
-import com.example.dilab.sampledilabapplication.Sample.SampleCentroidClassifier;
-import com.example.dilab.sampledilabapplication.Sample.SampleDatabaseInitializer;
-import com.example.dilab.sampledilabapplication.Sample.SampleMNClassifier;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -42,7 +38,6 @@ import kr.ac.korea.intelligentgallery.database.DatabaseCRUD;
 import kr.ac.korea.intelligentgallery.database.DatabaseHelper;
 import kr.ac.korea.intelligentgallery.dialog.CommonDialog;
 import kr.ac.korea.intelligentgallery.dialog.FileDialog;
-import kr.ac.korea.intelligentgallery.intelligence.Ranker.SemanticMatching;
 import kr.ac.korea.intelligentgallery.intelligence.Sample.Model.ContentScoreData;
 import kr.ac.korea.intelligentgallery.listener.CommonDialogListener;
 import kr.ac.korea.intelligentgallery.util.ConstantUtil;
@@ -95,12 +90,6 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        DiLabClassifierUtil.initializer = new SampleDatabaseInitializer(MainAct.this);
-        DiLabClassifierUtil.cNameConverter = new SampleCategoryNamingConverter(2);
-        DiLabClassifierUtil.mnClassifier = new SampleMNClassifier(3, 2);
-        DiLabClassifierUtil.centroidClassifier = SampleCentroidClassifier.getClassifier(DiLabClassifierUtil.initializer.getTargetPath(), "sigmaBase030.db");
-        DiLabClassifierUtil.K = 5; //const로 해서 변경할 수 없도록 처리해야한다.
-
 
         DebugUtil.showDebug("MainAct, onCreate()");
         setContentView(R.layout.activity_main);
@@ -437,13 +426,6 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                                 DebugUtil.showDebug("MainAct, onOptionItemSelected(), case R.id.action_searching, case Positive ");
                                 //시맨틱 검색
                                 // 분류기 초기화
-
-                                DiLabClassifierUtil.initializer = new SampleDatabaseInitializer(MainAct.this);
-                                DiLabClassifierUtil.cNameConverter = new SampleCategoryNamingConverter(2);
-                                DiLabClassifierUtil.mnClassifier = new SampleMNClassifier(3, 2);
-                                DiLabClassifierUtil.centroidClassifier = SampleCentroidClassifier.getClassifier(DiLabClassifierUtil.initializer.getTargetPath(), "sigmaBase030.db");
-                                DiLabClassifierUtil.semanticMatching = new SemanticMatching(getApplicationContext());
-                                DiLabClassifierUtil.K = 5; //const로 해서 변경할 수 없도록 처리해야한다.
 
                                 categoryList = DiLabClassifierUtil.centroidClassifier.topK(DiLabClassifierUtil.K, inputText);
                                 ContentScoreData[] contentScoreDatas = DiLabClassifierUtil.semanticMatching.getRelevantContents(categoryList);
@@ -845,12 +827,6 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                 FileUtil.updateMediaStorageQuery(this);
 
 //                새로 촬영을 한 사진을 분류해야한다
-                //여기서 분류기 초기화
-                DiLabClassifierUtil.initializer = new SampleDatabaseInitializer(MainAct.this);
-                DiLabClassifierUtil.cNameConverter = new SampleCategoryNamingConverter(2);
-                DiLabClassifierUtil.mnClassifier = new SampleMNClassifier(3, 2);
-                DiLabClassifierUtil.centroidClassifier = SampleCentroidClassifier.getClassifier(DiLabClassifierUtil.initializer.getTargetPath(), "sigmaBase030.db");
-                DiLabClassifierUtil.K = 5; //const로 해서 변경할 수 없도록 처리해야한다.
                 //inverted index table insert
                 /** 특정 한 개의 이미지에 대해서 K 개의 카테고리를 생성하여 분류하는 프로세스를 진행한다 */
                 DiLabClassifierUtil.classifySpecificImageFile("helloworld", lastImageId);//분류에 필요한 키워드의 경우 사진앱은 임의의 문자열

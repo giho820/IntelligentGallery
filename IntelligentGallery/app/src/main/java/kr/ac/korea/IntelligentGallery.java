@@ -9,6 +9,7 @@ import org.acra.annotation.ReportsCrashes;
 
 import kr.ac.korea.intelligentgallery.R;
 import kr.ac.korea.intelligentgallery.util.DebugUtil;
+import kr.ac.korea.intelligentgallery.util.DiLabClassifierUtil;
 
 /**
  * Created by preparkha on 15. 6. 15..
@@ -41,8 +42,8 @@ public class IntelligentGallery extends Application {
     public void onCreate() {
         super.onCreate();
 
-        SampleResourceInitializer resourceInitializer = new SampleResourceInitializer();
-        resourceInitializer.initialize(getApplicationContext());
+        SampleResourceInitializer.initialize(getApplicationContext());
+        DiLabClassifierUtil.init(getApplicationContext());
 
 //        ACRA.init(this);
         DebugUtil.showDebug("KorThaiDicApplication onCreate()");

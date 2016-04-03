@@ -1,5 +1,7 @@
 package kr.ac.korea.intelligentgallery.util;
 
+import android.content.Context;
+
 import com.example.dilab.sampledilabapplication.Sample.Models.SampleScoreData;
 import com.example.dilab.sampledilabapplication.Sample.SampleCategoryNamingConverter;
 import com.example.dilab.sampledilabapplication.Sample.SampleCentroidClassifier;
@@ -20,6 +22,15 @@ public class DiLabClassifierUtil {
     public static SampleDatabaseInitializer initializer;
     public static SemanticMatching semanticMatching;
     public static Integer K;
+
+    public static void init(Context context){
+        DiLabClassifierUtil.initializer = new SampleDatabaseInitializer(context);
+        DiLabClassifierUtil.cNameConverter = new SampleCategoryNamingConverter(2);
+        DiLabClassifierUtil.mnClassifier = new SampleMNClassifier(3, 2);
+        DiLabClassifierUtil.centroidClassifier = SampleCentroidClassifier.getClassifier(DiLabClassifierUtil.initializer.getTargetPath(), "sigmaBase030.db");
+        DiLabClassifierUtil.semanticMatching = new SemanticMatching(context);
+        DiLabClassifierUtil.K = 5;
+    }
 
     public static LinkedHashMap<Integer, String> classifySpecificImageFile(String inputText, Integer _DATA) {
 
