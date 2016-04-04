@@ -1,7 +1,13 @@
 package kr.ac.korea.intelligentgallery.data;
 
+import android.content.Context;
+import android.net.Uri;
+import android.provider.MediaStore;
+
 import java.io.File;
 import java.io.Serializable;
+
+import kr.ac.korea.intelligentgallery.util.FileUtil;
 
 /**
  * Created by kiho on 2015. 12. 10..
@@ -51,8 +57,13 @@ public class ImageFile implements Serializable {
         return path;
     }
 
+
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public void setPath(Context context, Integer id) {
+        this.path = FileUtil.getImagePath(context, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + id));
     }
 
     public String getParentPath() {

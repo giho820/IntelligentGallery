@@ -1,6 +1,8 @@
 package kr.ac.korea.intelligentgallery.adapter;
 
 import android.content.Context;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +21,7 @@ import kr.ac.korea.intelligentgallery.act.SearchResultAct;
 import kr.ac.korea.intelligentgallery.data.ImageFile;
 import kr.ac.korea.intelligentgallery.fragment.FolderFrag;
 import kr.ac.korea.intelligentgallery.util.DebugUtil;
+import kr.ac.korea.intelligentgallery.util.FileUtil;
 import kr.ac.korea.intelligentgallery.util.ImageUtil;
 import kr.ac.korea.intelligentgallery.util.TextUtil;
 
@@ -113,8 +116,14 @@ public class SearchResultActImageAdapter extends BaseAdapter {
 
         if (item != null) {
             if (!TextUtil.isNull(item.getPath())) {
+                String imagePath = FileUtil.getImagePath(context, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + item.getId()));
                 convertView.setVisibility(View.VISIBLE);
-                ImageLoader.getInstance().displayImage("file://" + item.getPath(), holder.image);
+                if(ImageLoader.getInstance().getDiskCache().get("file://" + imagePath) != null) {
+                    ImageLoader.getInstance().displayImage("file://" + imagePath, holder.image);
+                } else {
+                    ImageLoader.getInstance().displayImage(ImageLoader.getInstance().getDiskCache().get("file://" + imagePath).getAbsolutePath(), holder.image);
+                }
+
             }
         }
 

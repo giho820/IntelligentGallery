@@ -295,18 +295,12 @@ public class DatabaseCRUD {
     public static ArrayList<ContentScoreData> getContentScoreData(int cID) {
         ArrayList<ContentScoreData> ContentScoreDatas = new ArrayList<>();
         String selectSql = "SELECT *" + " FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
-                + " where " + DatabaseConstantUtil.COLUMN_CATEGORY_ID + "=" + cID + ";";
+                + " where " + DatabaseConstantUtil.COLUMN_CATEGORY_ID + "=" + cID + " and "+ DatabaseConstantUtil.COLUMN_RANK +"!=0;";
         cursor = DatabaseHelper.sqLiteDatabase.rawQuery("PRAGMA case_sensitive_like = 'TRUE' ", null);
         cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
 
-        if (cursor == null)
-            return null;
-
-        if (cursor.getCount() <= 0)
-            return null;
-
         LinkedHashMap<Integer, ContentScoreData> a_mapScores = new LinkedHashMap<Integer, ContentScoreData>();
-        while (cursor.moveToNext()) {
+        while (cursor != null && cursor.moveToNext()) {
             ContentScoreData ContentScoreData = new ContentScoreData();
             int dID = cursor.getInt(1);
             ContentScoreData.setContentsID(dID);
@@ -317,6 +311,28 @@ public class DatabaseCRUD {
         cursor.close();
         return ContentScoreDatas;
     }
+
+
+    public static ArrayList<ContentScoreData> getContentScoreData(int cID, int currentImageId) {
+        ArrayList<ContentScoreData> ContentScoreDatas = new ArrayList<>();
+        String selectSql = "SELECT *" + " FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
+                + " where " + DatabaseConstantUtil.COLUMN_CATEGORY_ID + "=" + cID + " and "+ DatabaseConstantUtil.COLUMN_RANK +"!=0 and "+DatabaseConstantUtil.COLUMN_DID+"!="+currentImageId+";";
+        cursor = DatabaseHelper.sqLiteDatabase.rawQuery("PRAGMA case_sensitive_like = 'TRUE' ", null);
+        cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
+
+        LinkedHashMap<Integer, ContentScoreData> a_mapScores = new LinkedHashMap<Integer, ContentScoreData>();
+        while (cursor != null && cursor.moveToNext()) {
+            ContentScoreData ContentScoreData = new ContentScoreData();
+            int dID = cursor.getInt(1);
+            ContentScoreData.setContentsID(dID);
+            ContentScoreData.setGraphScore(cursor.getDouble(4));
+            ContentScoreDatas.add(ContentScoreData);
+            a_mapScores.put(cID, ContentScoreData);
+        }
+        cursor.close();
+        return ContentScoreDatas;
+    }
+
 
 
     public static ArrayList<SampleScoreData> getScoreDatasUsingDidThatSizeIsK(Integer currentImageFileImageId, Integer k) {
@@ -334,9 +350,27 @@ public class DatabaseCRUD {
             int categoryId = cursor.getInt(2);
             double score = cursor.getDouble(4);
             SampleScoreData sampleScoreData = new SampleScoreData(categoryId, score);
-            DebugUtil.showDebug(GalleryAct.correctTopk +", cid:: " + sampleScoreData.getID() + " 's score:: " + sampleScoreData.getScore());
+            DebugUtil.showDebug(GalleryAct.correctTopk + ", cid:: " + sampleScoreData.getID() + " 's score:: " + sampleScoreData.getScore());
             scoreDatas.add(sampleScoreData);
         }
         return scoreDatas;
+    }
+
+    public static Integer getCategoryIdUsingImageId(Integer did) {
+        Integer cid = 0;
+        String selectSql = "select "+ DatabaseConstantUtil.COLUMN_CATEGORY_ID +" from " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
+                + " where " + DatabaseConstantUtil.COLUMN_DID + "=" + did
+                + " and " + DatabaseConstantUtil.COLUMN_RANK + "=0";
+
+        cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
+
+        if(cursor.getCount() == 0l) {
+            DebugUtil.showDebug("DatabaseCRUD,  getCategoryIdUsingImageId(), 분류가 되어있지 않은 이미지");
+        }
+        while (cursor != null && cursor.moveToNext()) {//&& cursor.getCount() == k
+            cid = cursor.getInt(0);
+            DebugUtil.showDebug("DatabaseCRUD,  getCategoryIdUsingImageId(), 현재 이미지의 cid :: " + cid);
+        }
+        return cid;
     }
 }

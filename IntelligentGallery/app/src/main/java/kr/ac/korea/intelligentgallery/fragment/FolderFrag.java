@@ -203,35 +203,35 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
 
             //정렬하기
             case R.id.action_arranging_orderby_abc:
-                FolderCategoryAct.imageOrderby = MediaStore.Images.Media.DEFAULT_SORT_ORDER + " desc";
+                FolderCategoryAct.imageOrderby = MediaStore.Images.Media.DEFAULT_SORT_ORDER;
                 SharedPreUtil.getInstance().putPreference(SharedPreUtil.FOLDER_CATEGORY_ORDER_BY, FolderCategoryAct.imageOrderby);
                 updatedImageFiles = FileUtil.getImages(folderCategoryAct, album);
                 imageAdapter.addItems(updatedImageFiles);
                 return true;
 
             case R.id.action_arranging_orderby_size:
-                FolderCategoryAct.imageOrderby = MediaStore.Images.Media.SIZE + " desc";
+                FolderCategoryAct.imageOrderby = MediaStore.Images.Media.SIZE;
                 SharedPreUtil.getInstance().putPreference(SharedPreUtil.FOLDER_CATEGORY_ORDER_BY, FolderCategoryAct.imageOrderby);
                 updatedImageFiles = FileUtil.getImages(folderCategoryAct, album);
                 imageAdapter.addItems(updatedImageFiles);
                 return true;
 
             case R.id.action_arranging_orderby_data:
-                FolderCategoryAct.imageOrderby = MediaStore.Images.Media.DATA + " desc";
+                FolderCategoryAct.imageOrderby = MediaStore.Images.Media.DATA;
                 SharedPreUtil.getInstance().putPreference(SharedPreUtil.FOLDER_CATEGORY_ORDER_BY, FolderCategoryAct.imageOrderby);
                 updatedImageFiles = FileUtil.getImages(folderCategoryAct, album);
                 imageAdapter.addItems(updatedImageFiles);
                 return true;
 
             case R.id.action_arranging_orderby_date_added:
-                FolderCategoryAct.imageOrderby = MediaStore.Images.Media.DATE_ADDED + " desc";
+                FolderCategoryAct.imageOrderby = MediaStore.Images.Media.DATE_ADDED;
                 SharedPreUtil.getInstance().putPreference(SharedPreUtil.FOLDER_CATEGORY_ORDER_BY, FolderCategoryAct.imageOrderby);
                 updatedImageFiles = FileUtil.getImages(folderCategoryAct, album);
                 imageAdapter.addItems(updatedImageFiles);
                 return true;
 
             case R.id.action_arranging_orderby_date_taken:
-                FolderCategoryAct.imageOrderby = MediaStore.Images.Media.DATE_TAKEN + " desc";
+                FolderCategoryAct.imageOrderby = MediaStore.Images.Media.DATE_TAKEN;
                 SharedPreUtil.getInstance().putPreference(SharedPreUtil.FOLDER_CATEGORY_ORDER_BY, FolderCategoryAct.imageOrderby);
                 updatedImageFiles = FileUtil.getImages(folderCategoryAct, album);
                 imageAdapter.addItems(updatedImageFiles);

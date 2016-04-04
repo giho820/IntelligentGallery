@@ -51,6 +51,7 @@ import kr.ac.korea.intelligentgallery.util.TextUtil;
 
 public class MainAct extends ParentAct implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
 
+    private ParentAct parentAct;
     // 데이터베이스 헬퍼
     private DatabaseHelper databaseHelper;
 
@@ -140,7 +141,6 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
         intentFilter.addAction("android.intent.action.classifying");
         registerReceiver(mBroadcastReceiver, intentFilter);
 
-//        FileUtil.updateMediaStorageQueryFromExternalStorage(this);
         FileUtil.updateMediaStorageQuery(this);
 
         //앨범 로드
@@ -825,6 +825,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
 
 //                FileUtil.updateMediaStorageQueryFromExternalStorage(this);
                 FileUtil.updateMediaStorageQuery(this);
+                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI+"/"+lastImageId)));
 
 //                새로 촬영을 한 사진을 분류해야한다
                 //inverted index table insert

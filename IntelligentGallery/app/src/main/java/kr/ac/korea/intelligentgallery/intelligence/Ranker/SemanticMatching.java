@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import kr.ac.korea.intelligentgallery.database.DatabaseCRUD;
 import kr.ac.korea.intelligentgallery.intelligence.Sample.DBAdapter.GraphDBAdapter;
 import kr.ac.korea.intelligentgallery.intelligence.Sample.Model.ContentScoreData;
+import kr.ac.korea.intelligentgallery.util.DebugUtil;
 
 public class SemanticMatching {
 
@@ -42,14 +43,43 @@ public class SemanticMatching {
         ////// Function  //////
         ///////////////////////
 
-        /**
-         * ??
-         *
-         * @param   arrContent2CategoryScore   검색어에 대하여 반환된 카테고리-score 값들
-         * @return  각 콘텐츠에 대한 콘텐츠ID - Score값
-         * @since   Sigma1.0
-         */
-        public ContentScoreData[] getRelevantContents(ArrayList<SampleScoreData> arrContent2CategoryScore) {
+    /**
+     * ??
+     *
+     * @param   arrContent2CategoryScore   검색어에 대하여 반환된 카테고리-score 값들
+     * @return  각 콘텐츠에 대한 콘텐츠ID - Score값
+     * @since   Sigma1.0
+     */
+    public ContentScoreData[] getRelevantContents(ArrayList<SampleScoreData> arrContent2CategoryScore) {
+        LinkedHashMap<Integer, ContentScoreData> a_mapScores = new LinkedHashMap<Integer, ContentScoreData>();
+        try {
+            if (arrContent2CategoryScore == null || arrContent2CategoryScore.size() == 0)
+                return a_mapScores.values().toArray(new ContentScoreData[0]);
+            ArrayList<ContentScoreData> contentInvertedIndexCount = null;
+            for (int i = 0; i < arrContent2CategoryScore.size(); i++) {
+                // Category에 대한 가장 유사한 N개의 카테고리 가져옴
+                SampleScoreData[] b_categoryScores = this.m_graph.getTopNRelevanceCategory(arrContent2CategoryScore.get(i).getID(), 5);
+
+                for (int j = 0; j < b_categoryScores.length; j++) {
+                    int categoryID_content = b_categoryScores[j].getID();
+                    // categoryID에 속하는 모든 inverted index content 값을 가져옴
+                    contentInvertedIndexCount = DatabaseCRUD.getContentScoreData(categoryID_content);
+                    for (ContentScoreData contentScoreData: contentInvertedIndexCount) {
+                        a_mapScores.put(contentScoreData.getContentsID(), contentScoreData);
+                    }
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            return a_mapScores.values().toArray(new ContentScoreData[0]);
+        }
+    }
+
+        //매칭에서 현재 이미지 제외하기 위해 메소드 오버로딩
+        public ContentScoreData[] getRelevantContents(ArrayList<SampleScoreData> arrContent2CategoryScore, Integer currentImageId) {
+            DebugUtil.showDebug("mmm:: 제외해야하는 currentImageId::" + currentImageId);
+
             LinkedHashMap<Integer, ContentScoreData> a_mapScores = new LinkedHashMap<Integer, ContentScoreData>();
             try {
                 if (arrContent2CategoryScore == null || arrContent2CategoryScore.size() == 0)
@@ -58,11 +88,11 @@ public class SemanticMatching {
                 for (int i = 0; i < arrContent2CategoryScore.size(); i++) {
                     // Category에 대한 가장 유사한 N개의 카테고리 가져옴
                     SampleScoreData[] b_categoryScores = this.m_graph.getTopNRelevanceCategory(arrContent2CategoryScore.get(i).getID(), 5);
-
+                    DebugUtil.showDebug("mmm:: b_categoryScores.length 5개여야함::" + b_categoryScores.length);
                     for (int j = 0; j < b_categoryScores.length; j++) {
                         int categoryID_content = b_categoryScores[j].getID();
                         // categoryID에 속하는 모든 inverted index content 값을 가져옴
-                        contentInvertedIndexCount = DatabaseCRUD.getContentScoreData(categoryID_content);
+                        contentInvertedIndexCount = DatabaseCRUD.getContentScoreData(categoryID_content, currentImageId);
                         for (ContentScoreData contentScoreData: contentInvertedIndexCount) {
                             a_mapScores.put(contentScoreData.getContentsID(), contentScoreData);
                         }
@@ -70,7 +100,9 @@ public class SemanticMatching {
                 }
             }catch (Exception e){
                 e.printStackTrace();
+                DebugUtil.showDebug("mmm:: SemanticMatching.java, getRelevantContents(arraylist, integer), catch문");
             }finally {
+                DebugUtil.showDebug("mmm:: SemanticMatching.java, getRelevantContents(arraylist, integer), finally 리턴 결과 크기" + a_mapScores.values().toArray(new ContentScoreData[0]).length);
                 return a_mapScores.values().toArray(new ContentScoreData[0]);
             }
         }

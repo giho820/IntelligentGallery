@@ -64,8 +64,9 @@ public class MatchingImageRecyclerAdapter extends RecyclerView.Adapter {
         this.item = item;
     }
 
+
     public void setAdapterArrayList(ArrayList<ImageFile> adapterArrayList) {
-        this.matchingResultImages = adapterArrayList;
+            this.matchingResultImages = adapterArrayList;
     }
 
     @Override

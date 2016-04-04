@@ -34,12 +34,14 @@ public class ItemDecorationMatchingImg extends RecyclerView.ItemDecoration {
 //            outRect.top = mSizeHorizontalSpacingPx;
 //        }
         if (itemPosition % childCount == 0) {
-            outRect.left = 0;
+//            outRect.left = 0;
+            outRect.left = padding;
             outRect.right = padding;
             mNeedLeftSpacing = true;
         } else if ((itemPosition + 1) % childCount == 0) {
             mNeedLeftSpacing = false;
-            outRect.right = 0;
+//            outRect.right = 0;
+            outRect.right = padding;
             outRect.left = padding;
         } else if (mNeedLeftSpacing) {
             mNeedLeftSpacing = false;

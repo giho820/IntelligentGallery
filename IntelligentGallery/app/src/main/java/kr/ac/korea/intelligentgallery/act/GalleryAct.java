@@ -28,13 +28,8 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.example.dilab.sampledilabapplication.Sample.Models.SampleScoreData;
-import com.example.dilab.sampledilabapplication.Sample.SampleCategoryNamingConverter;
-import com.example.dilab.sampledilabapplication.Sample.SampleCentroidClassifier;
-import com.example.dilab.sampledilabapplication.Sample.SampleDatabaseInitializer;
-import com.example.dilab.sampledilabapplication.Sample.SampleMNClassifier;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
@@ -60,7 +55,6 @@ import kr.ac.korea.intelligentgallery.common.ViewPagerFixed;
 import kr.ac.korea.intelligentgallery.data.ImageFile;
 import kr.ac.korea.intelligentgallery.database.DatabaseCRUD;
 import kr.ac.korea.intelligentgallery.dialog.CommonDialog;
-import kr.ac.korea.intelligentgallery.intelligence.Ranker.SemanticMatching;
 import kr.ac.korea.intelligentgallery.intelligence.Sample.Model.ContentScoreData;
 import kr.ac.korea.intelligentgallery.listener.AdapterItemClickListener;
 import kr.ac.korea.intelligentgallery.listener.CommonDialogListener;
@@ -70,7 +64,6 @@ import kr.ac.korea.intelligentgallery.util.DiLabClassifierUtil;
 import kr.ac.korea.intelligentgallery.util.ExifUtil;
 import kr.ac.korea.intelligentgallery.util.FileUtil;
 import kr.ac.korea.intelligentgallery.util.ImageUtil;
-import kr.ac.korea.intelligentgallery.util.MoveActUtil;
 import kr.ac.korea.intelligentgallery.util.TextUtil;
 import uk.co.senab.photoview.PhotoView;
 import uk.co.senab.photoview.PhotoViewAttacher;
@@ -125,6 +118,9 @@ public class GalleryAct extends ParentAct {
         }
 
         currentCategoryId = currentImageFileImage.getCategoryId();
+        if(currentCategoryId == null){
+            currentCategoryId = DatabaseCRUD.getCategoryIdUsingImageId(currentImageFileImage.getId());
+        }
         DebugUtil.showDebug("GalleryAct, onCreate(), currentImageFile cid:: " + currentCategoryId);
 
 
@@ -181,9 +177,13 @@ public class GalleryAct extends ParentAct {
             @Override
             public void onAdapterItemClick(View view, int position) {
                 DebugUtil.showDebug("matchedImages : " + matchingResultImages.get(position).getId());
-                Intent intent = new Intent(GalleryAct.this, MatchingAct.class);
-                intent.putExtra("clicked_matching_image", matchingResultImages.get(position).getId());
-                MoveActUtil.moveActivity(GalleryAct.this, intent, -1, -1, false, false);
+                matchingResultImages.get(position).setPath(GalleryAct.this, matchingResultImages.get(position).getId());
+                //galleryAct로 이동해야한다.
+                goToGalleryAct(matchingResultImages, position);
+                //stack은 쌓이도록 한다
+//                Intent intent = new Intent(GalleryAct.this, MatchingAct.class);
+//                intent.putExtra("clicked_matching_image", matchingResultImages.get(position).getId());
+//                MoveActUtil.moveActivity(GalleryAct.this, intent, -1, -1, false, false);
             }
         });
         recyclerView.setAdapter(matchingImageRecyclerAdapter);
@@ -429,8 +429,6 @@ public class GalleryAct extends ParentAct {
                         startActivity(intent);
                     }
                 }
-
-
                 return true;
             default:
                 break;
@@ -494,7 +492,7 @@ public class GalleryAct extends ParentAct {
 
             //분류기 객체가 초기화가 이루어졌는데 널이 아니라서 사용을 못하게 되는 경우가 가장 문제일 것 같다고 하심
             //싱글톤 패턴으로 널이 아닌 객체를 한번만 초기화하고 계속 들고디닐 수 있도록 해야한다.
-            ContentScoreData[] contentScoreDatas = DiLabClassifierUtil.semanticMatching.getRelevantContents(categoryList);
+            ContentScoreData[] contentScoreDatas = DiLabClassifierUtil.semanticMatching.getRelevantContents(categoryList, currentImageFileImage.getId());
             if (contentScoreDatas == null) {
                 return -1;
             }
@@ -686,7 +684,7 @@ public class GalleryAct extends ParentAct {
                                                 message = "Unknown error";
                                                 break;
                                         }
-                                        Toast.makeText(view.getContext(), message, Toast.LENGTH_SHORT).show();
+//                                        Toast.makeText(view.getContext(), message, Toast.LENGTH_SHORT).show();
 
                                         spinner.setVisibility(View.GONE);
                                     }
@@ -761,7 +759,7 @@ public class GalleryAct extends ParentAct {
                                             message = "Unknown error";
                                             break;
                                     }
-                                    Toast.makeText(view.getContext(), message, Toast.LENGTH_SHORT).show();
+//                                    Toast.makeText(view.getContext(), message, Toast.LENGTH_SHORT).show();
 
                                     spinner.setVisibility(View.GONE);
                                 }

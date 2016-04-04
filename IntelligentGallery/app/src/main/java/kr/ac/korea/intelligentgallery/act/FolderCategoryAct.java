@@ -324,7 +324,7 @@ public class FolderCategoryAct extends ParentAct implements View.OnClickListener
                 folderFrag.imageAdapter.addItems(updatedImageFiles);
 
 //                categoryFragInAlbum.imageAdapter.addItems(updatedCategories);
-                categoryFragInAlbum.setImagesInFolder(updatedImageFiles);
+//                categoryFragInAlbum.setImagesInFolder(updatedImageFiles);
             }
 
 

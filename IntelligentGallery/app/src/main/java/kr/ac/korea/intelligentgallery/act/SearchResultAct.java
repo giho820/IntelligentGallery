@@ -23,6 +23,8 @@ import kr.ac.korea.intelligentgallery.util.FileUtil;
 public class SearchResultAct extends ParentAct {
     public static SearchResultAct searchResultAct;
 
+    private ParentAct parentAct;
+
     ArrayList<Integer> keywordSearchResults = new ArrayList<>();
     public ArrayList<ImageFile> keywordSearchResultImages;
     public SearchResultActImageAdapter keywordSearchResultimageAdapter;
@@ -51,7 +53,7 @@ public class SearchResultAct extends ParentAct {
         keywordSearchResults = new ArrayList<>();
         keywordSearchResults = getIntent().getIntegerArrayListExtra("keywordSearchResult");
         DebugUtil.showDebug("SearchResultAct, keywordSearchResult::" + keywordSearchResults.size());
-        for(Integer keywordSearchResultImageId : keywordSearchResults){
+        for (Integer keywordSearchResultImageId : keywordSearchResults) {
             ImageFile imageFile = new ImageFile();
             imageFile.setId(keywordSearchResultImageId);
             imageFile.setPath(FileUtil.getImagePath(this, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + keywordSearchResultImageId)));
@@ -59,14 +61,12 @@ public class SearchResultAct extends ParentAct {
             keywordSearchResultImages.add(imageFile);
         }
 
-        if(keywordSearchResultImages != null && keywordSearchResultImages.size() >= 0) {
+        if (keywordSearchResultImages != null && keywordSearchResultImages.size() >= 0) {
             keywordSearchResultimageAdapter = new SearchResultActImageAdapter(SearchResultAct.this, keywordSearchResultImages);
             DebugUtil.showDebug("keywordSearchResultimageAdapter : " + keywordSearchResultimageAdapter.getCount());
             textViewKeywordSearchCount.setText("" + keywordSearchResultimageAdapter.getCount());
             gridViewKeywordSearch.setAdapter(keywordSearchResultimageAdapter);
         }
-
-
 
 
         //시맨틱 검색
@@ -79,7 +79,7 @@ public class SearchResultAct extends ParentAct {
         symanticSearchResults = getIntent().getIntegerArrayListExtra("searchResult");
         Set<Integer> ids = new HashSet<>();
         ids.addAll(symanticSearchResults);
-        for(Integer searchResultImageId : ids) {
+        for (Integer searchResultImageId : ids) {
             ImageFile imageFileTmp = new ImageFile();
             imageFileTmp.setId(searchResultImageId);
             imageFileTmp.setPath(FileUtil.getImagePath(this, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + searchResultImageId)));
@@ -87,9 +87,9 @@ public class SearchResultAct extends ParentAct {
             symanticSearchResultImages.add(imageFileTmp);
         }
 
-        if(symanticSearchResultImages != null && symanticSearchResultImages.size() >= 0) {
+        if (symanticSearchResultImages != null && symanticSearchResultImages.size() >= 0) {
             symanticSearchResultimageAdapter = new SearchResultActImageAdapter(SearchResultAct.this, symanticSearchResultImages);
-            DebugUtil.showDebug("imageAdapter : "  + symanticSearchResultimageAdapter.getCount());
+            DebugUtil.showDebug("imageAdapter : " + symanticSearchResultimageAdapter.getCount());
             textViewSymanticSearchCount.setText("" + symanticSearchResultimageAdapter.getCount());
             gridViewSymanticSearchResult.setAdapter(symanticSearchResultimageAdapter);
         }
