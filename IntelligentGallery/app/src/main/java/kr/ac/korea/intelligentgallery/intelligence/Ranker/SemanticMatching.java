@@ -14,34 +14,34 @@ import kr.ac.korea.intelligentgallery.util.DebugUtil;
 
 public class SemanticMatching {
 
-        private GraphDBAdapter m_graph;
+    private GraphDBAdapter m_graph;
 
-        private WPPR wppr;
+    private WPPR wppr;
 
-        ///////////////////////
-        ///// Constructor /////
-        ///////////////////////
-        public SemanticMatching(Context context) {
-            String path = "/data/data/" + context.getPackageName() + "/files/";
-            this.m_graph = new GraphDBAdapter();
-            this.m_graph.openDB(path + "sigmaSimilarity030.db");
-        }
+    ///////////////////////
+    ///// Constructor /////
+    ///////////////////////
+    public SemanticMatching(Context context) {
+        String path = "/data/data/" + context.getPackageName() + "/files/";
+        this.m_graph = new GraphDBAdapter();
+        this.m_graph.openDB(path + "sigmaSimilarity030.db");
+    }
 
-        ///////////////////////
-        /////// SETTER // /////
-        ///////////////////////
+    ///////////////////////
+    /////// SETTER // /////
+    ///////////////////////
 
 
-        protected void setWPPR(WPPR wppr) {
-            this.wppr = wppr;
-        }
-        ///////////////////////
-        /////// GETTER // /////
-        ///////////////////////
+    protected void setWPPR(WPPR wppr) {
+        this.wppr = wppr;
+    }
+    ///////////////////////
+    /////// GETTER // /////
+    ///////////////////////
 
-        ///////////////////////
-        ////// Function  //////
-        ///////////////////////
+    ///////////////////////
+    ////// Function  //////
+    ///////////////////////
 
     /**
      * ??
@@ -76,42 +76,51 @@ public class SemanticMatching {
         }
     }
 
-        //매칭에서 현재 이미지 제외하기 위해 메소드 오버로딩
-        public ContentScoreData[] getRelevantContents(ArrayList<SampleScoreData> arrContent2CategoryScore, Integer currentImageId) {
-            DebugUtil.showDebug("mmm:: 제외해야하는 currentImageId::" + currentImageId);
-
-            LinkedHashMap<Integer, ContentScoreData> a_mapScores = new LinkedHashMap<Integer, ContentScoreData>();
-            try {
-                if (arrContent2CategoryScore == null || arrContent2CategoryScore.size() == 0)
-                    return a_mapScores.values().toArray(new ContentScoreData[0]);
-                ArrayList<ContentScoreData> contentInvertedIndexCount = null;
-                for (int i = 0; i < arrContent2CategoryScore.size(); i++) {
-                    // Category에 대한 가장 유사한 N개의 카테고리 가져옴
-                    SampleScoreData[] b_categoryScores = this.m_graph.getTopNRelevanceCategory(arrContent2CategoryScore.get(i).getID(), 5);
-                    DebugUtil.showDebug("mmm:: b_categoryScores.length 5개여야함::" + b_categoryScores.length);
-                    for (int j = 0; j < b_categoryScores.length; j++) {
-                        int categoryID_content = b_categoryScores[j].getID();
-                        // categoryID에 속하는 모든 inverted index content 값을 가져옴
-                        contentInvertedIndexCount = DatabaseCRUD.getContentScoreData(categoryID_content, currentImageId);
+    //매칭에서 현재 이미지 제외하기 위해 메소드 오버로딩
+    public ContentScoreData[] getRelevantContents(ArrayList<SampleScoreData> arrContent2CategoryScore, Integer contentID) {
+        int count = 0;
+        LinkedHashMap<Integer, ContentScoreData> a_mapScores = new LinkedHashMap<Integer, ContentScoreData>();
+        try {
+            if (arrContent2CategoryScore == null || arrContent2CategoryScore.size() == 0)
+                return a_mapScores.values().toArray(new ContentScoreData[0]);
+            ArrayList<ContentScoreData> contentInvertedIndexCount = null;
+            for (int i = 0; i < arrContent2CategoryScore.size(); i++) {
+                // Category에 대한 가장 유사한 N개의 카테고리 가져옴
+                SampleScoreData[] b_categoryScores = this.m_graph.getTopNRelevanceCategory(arrContent2CategoryScore.get(i).getID(), 5);
+                DebugUtil.showDebug("mmm:: b_categoryScores.length 5개여야함::" + b_categoryScores.length);
+                for (int j = 0; j < b_categoryScores.length; j++) {
+                    int categoryID_content = b_categoryScores[j].getID();
+                    // categoryID에 속하는 모든 inverted index content 값을 가져옴
+                    contentInvertedIndexCount = DatabaseCRUD.getContentScoreData(categoryID_content);
+                    if(contentInvertedIndexCount != null){
                         for (ContentScoreData contentScoreData: contentInvertedIndexCount) {
-                            a_mapScores.put(contentScoreData.getContentsID(), contentScoreData);
+                            if(contentID != contentScoreData.getContentsID()){
+                                if(a_mapScores.containsKey(contentScoreData.getContentsID())){
+
+                                }else{
+                                    if(count++ < 5){
+                                        a_mapScores.put(contentScoreData.getContentsID(), contentScoreData);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
-            }catch (Exception e){
-                e.printStackTrace();
-                DebugUtil.showDebug("mmm:: SemanticMatching.java, getRelevantContents(arraylist, integer), catch문");
-            }finally {
-                DebugUtil.showDebug("mmm:: SemanticMatching.java, getRelevantContents(arraylist, integer), finally 리턴 결과 크기" + a_mapScores.values().toArray(new ContentScoreData[0]).length);
-                return a_mapScores.values().toArray(new ContentScoreData[0]);
             }
-        }
-
-
-        public void calculateFinalScore(ContentScoreData[] a_aContentsScoreDatas, double a_dblAlpha) {
-            for (int i = 0; i < a_aContentsScoreDatas.length; i++) {
-                a_aContentsScoreDatas[i].calculateFinalScores(a_dblAlpha);
-                System.out.println(a_aContentsScoreDatas[i].getFinalScore());
-            }
+        }catch (Exception e){
+            e.printStackTrace();
+            DebugUtil.showDebug("mmm:: SemanticMatching.java, getRelevantContents(arraylist, integer), catch문");
+        }finally {
+            DebugUtil.showDebug("mmm:: SemanticMatching.java, getRelevantContents(arraylist, integer), finally 리턴 결과 크기" + a_mapScores.values().toArray(new ContentScoreData[0]).length);
+            return a_mapScores.values().toArray(new ContentScoreData[0]);
         }
     }
+
+
+    public void calculateFinalScore(ContentScoreData[] a_aContentsScoreDatas, double a_dblAlpha) {
+        for (int i = 0; i < a_aContentsScoreDatas.length; i++) {
+            a_aContentsScoreDatas[i].calculateFinalScores(a_dblAlpha);
+            System.out.println(a_aContentsScoreDatas[i].getFinalScore());
+        }
+    }
+}

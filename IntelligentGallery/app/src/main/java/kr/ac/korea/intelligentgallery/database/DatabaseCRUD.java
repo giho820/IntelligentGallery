@@ -294,8 +294,8 @@ public class DatabaseCRUD {
 
     public static ArrayList<ContentScoreData> getContentScoreData(int cID) {
         ArrayList<ContentScoreData> ContentScoreDatas = new ArrayList<>();
-        String selectSql = "SELECT *" + " FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
-                + " where " + DatabaseConstantUtil.COLUMN_CATEGORY_ID + "=" + cID + " and "+ DatabaseConstantUtil.COLUMN_RANK +"!=0;";
+        String selectSql = "SELECT * FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
+                + " where " + DatabaseConstantUtil.COLUMN_CATEGORY_ID + "=" + cID + " AND " + DatabaseConstantUtil.COLUMN_RANK + " != 0 ORDER BY " + DatabaseConstantUtil.COLUMN_SCORE + " DESC;";
         cursor = DatabaseHelper.sqLiteDatabase.rawQuery("PRAGMA case_sensitive_like = 'TRUE' ", null);
         cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
 
@@ -311,28 +311,6 @@ public class DatabaseCRUD {
         cursor.close();
         return ContentScoreDatas;
     }
-
-
-    public static ArrayList<ContentScoreData> getContentScoreData(int cID, int currentImageId) {
-        ArrayList<ContentScoreData> ContentScoreDatas = new ArrayList<>();
-        String selectSql = "SELECT *" + " FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
-                + " where " + DatabaseConstantUtil.COLUMN_CATEGORY_ID + "=" + cID + " and "+ DatabaseConstantUtil.COLUMN_RANK +"!=0 and "+DatabaseConstantUtil.COLUMN_DID+"!="+currentImageId+";";
-        cursor = DatabaseHelper.sqLiteDatabase.rawQuery("PRAGMA case_sensitive_like = 'TRUE' ", null);
-        cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
-
-        LinkedHashMap<Integer, ContentScoreData> a_mapScores = new LinkedHashMap<Integer, ContentScoreData>();
-        while (cursor != null && cursor.moveToNext()) {
-            ContentScoreData ContentScoreData = new ContentScoreData();
-            int dID = cursor.getInt(1);
-            ContentScoreData.setContentsID(dID);
-            ContentScoreData.setGraphScore(cursor.getDouble(4));
-            ContentScoreDatas.add(ContentScoreData);
-            a_mapScores.put(cID, ContentScoreData);
-        }
-        cursor.close();
-        return ContentScoreDatas;
-    }
-
 
 
     public static ArrayList<SampleScoreData> getScoreDatasUsingDidThatSizeIsK(Integer currentImageFileImageId, Integer k) {
