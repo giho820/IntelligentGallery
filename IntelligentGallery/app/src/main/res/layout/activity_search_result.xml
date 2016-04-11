@@ -27,7 +27,9 @@
                     android:layout_marginLeft="@dimen/dp_10"
                     android:text="키워드 검색 결과"
                     android:textColor="@color/colorMajorText"
-                    android:textSize="@dimen/abc_text_size_medium_material" />
+                    android:textSize="@dimen/abc_text_size_medium_material"
+                    android:focusableInTouchMode="true"
+                    android:focusable="true"/>
 
 
                 <TextView

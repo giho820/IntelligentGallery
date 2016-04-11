@@ -14,13 +14,6 @@ public class IntroAct extends ParentAct {
     DatabaseHelper databaseHelper;
     ParentAct parentAct;
 
-    public IntroAct() {
-    }
-
-    public IntroAct(ParentAct parentAct) {
-        this.parentAct = parentAct;
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

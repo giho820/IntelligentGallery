@@ -1,7 +1,6 @@
 package kr.ac.korea.intelligentgallery.act;
 
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -10,6 +9,7 @@ import java.util.ArrayList;
 
 import kr.ac.korea.intelligentgallery.R;
 import kr.ac.korea.intelligentgallery.adapter.MoveActAdapter;
+import kr.ac.korea.intelligentgallery.broadcastReceiver.MediaScannerBroadcastReceiver;
 import kr.ac.korea.intelligentgallery.common.ExpandableHeightGridView;
 import kr.ac.korea.intelligentgallery.common.ParentAct;
 import kr.ac.korea.intelligentgallery.data.Album;
@@ -51,9 +51,14 @@ public class MoveAct extends ParentAct {
     //앨범 로드하는 부분
     private void loadAlbums() {
 
-        FileUtil.callBroadCast(this); //새로운 앨범을 부르기 전 업데이트
+        if (!MediaScannerBroadcastReceiver.mMedaiScanning) {
+            DebugUtil.showDebug(MainAct.currentMission, "MainAct, loadAlbums()", "현재 풀스캔 중이지 않음, 풀 스캔 시작");
+            FileUtil.callBroadCast(this);
+        } else {
+            DebugUtil.showDebug(MainAct.currentMission, "MainAct, loadAlbums()", "현재 풀스캔 중");
+        }
 
-        albums = FileUtil.getAlbums(this, MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
+        albums = FileUtil.getAlbums(this, MainAct.albumOrderBy);
 
         if (albums == null) {
             DebugUtil.showDebug("MainAct, loadAlbums(), albums are null");

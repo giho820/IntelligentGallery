@@ -231,7 +231,7 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
                 return true;
 
             case R.id.action_arranging_orderby_date_taken:
-                FolderCategoryAct.imageOrderby = MediaStore.Images.Media.DATE_TAKEN;
+                FolderCategoryAct.imageOrderby = MediaStore.Images.Media.DATE_TAKEN + " desc";
                 SharedPreUtil.getInstance().putPreference(SharedPreUtil.FOLDER_CATEGORY_ORDER_BY, FolderCategoryAct.imageOrderby);
                 updatedImageFiles = FileUtil.getImages(folderCategoryAct, album);
                 imageAdapter.addItems(updatedImageFiles);
@@ -268,9 +268,11 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
                                     FileUtil.updateAlbumName(folderCategoryAct, album.getId(), fileNow.getPath());
                                     DebugUtil.showDebug("rename folder:: GalleryAct, after inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificAlbum(folderCategoryAct, album.getId()));//업데이트 이후
 
+                                    folderCategoryAct.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(filePre)));
 
-                                    folderCategoryAct.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(filePre)));//?
-//                                    FileUtil.callBroadCast(folderCategoryAct);//? 안되는 것 같지
+                                    imageAdapter.addItems(FileUtil.getImages(folderCategoryAct, album));
+                                    imageAdapter.notifyDataSetChanged();
+
                                     onBackPressed();
                                     onResume();
                                 } else {
@@ -510,7 +512,6 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
 //이동하기
             case R.id.action_moving:
                 if (imagesInFolder != null) {
-
                     Intent intent = new Intent(folderCategoryAct, MoveAct.class);
                     intent.putExtra("moveOrCopy", 0);
                     startActivityForResult(intent, ConstantUtil.GALLERYACT_REQUESTCODE_FOR_MOVEACT);
@@ -519,11 +520,15 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
 
 
                 return true;
-//            case R.id.action_copying:
-//                DebugUtil.showToast(folderCategoryAct, "복사하기");
-//
-//
-//                return true;
+            case R.id.action_copying:
+                if (imagesInFolder != null) {
+                    Intent intent = new Intent(folderCategoryAct, MoveAct.class);
+                    intent.putExtra("moveOrCopy", 1);
+                    startActivityForResult(intent, ConstantUtil.GALLERYACT_REQUESTCODE_FOR_COPYACT);
+
+                }
+
+                return true;
 
             case R.id.action_viewing_in_map:
 //                DebugUtil.showToast(folderCategoryAct, "지도에서 위치보기");
@@ -587,7 +592,7 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
         if (resultCode == folderCategoryAct.RESULT_OK) {
             if (requestCode == ConstantUtil.GALLERYACT_REQUESTCODE_FOR_MOVEACT) {
                 String destinationFolderPath = data.getStringExtra("pathFromMoveAct");
-                DebugUtil.showDebug("GalleryAct, onActivityResult() compare::" + album.getPath() + "==???" + destinationFolderPath);
+                DebugUtil.showDebug("FolderFrag, onActivityResult() compare::" + album.getPath() + "==???" + destinationFolderPath);
 
                 ArrayList<Integer> sortedSelectedPositions = new ArrayList<>();
                 sortedSelectedPositions.addAll(FolderFrag.selectedPositions);
@@ -606,10 +611,10 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
                         mCr.update(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values, MediaStore.Images.ImageColumns._ID + "=" + imagesInFolder.get(i).getId(), null);
                         DebugUtil.showDebug("FolderFrag, after inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificImageFile(folderCategoryAct, imagesInFolder.get(i).getId(), MediaStore.Images.Media.DATA));//업데이트 이후
                     }
-                    for (Integer i : selectedPositionsList) {
+
+                    for (int i = selectedPositionsList.size() - 1; i >= 0; i--) {
                         imagesInFolder.remove(imagesInFolder.get(i));
                     }
-
                     // update
                     imageAdapter.addItems(imagesInFolder);
                     imageAdapter.notifyDataSetChanged();
@@ -617,6 +622,56 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
 
                 } else {
                     DebugUtil.showToast(folderCategoryAct, "이동하려는 폴더가 현재 폴더와 같습니다");
+                }
+            }
+
+            if (requestCode == ConstantUtil.GALLERYACT_REQUESTCODE_FOR_COPYACT) {
+                String destinationFolderPath = data.getStringExtra("pathFromMoveAct");
+                DebugUtil.showDebug("FolderFrag, onActivityResult() compare::" + album.getPath() + "==???" + destinationFolderPath);
+
+                ArrayList<Integer> sortedSelectedPositions = new ArrayList<>();
+                sortedSelectedPositions.addAll(FolderFrag.selectedPositions);
+                Collections.sort(sortedSelectedPositions);
+                FolderFrag.selectedPositionsList = sortedSelectedPositions;
+
+                if (!album.getPath().equals(destinationFolderPath)) {
+                    ContentResolver mCr = folderCategoryAct.getContentResolver();
+                    MediaStore.Images.Media media = new MediaStore.Images.Media();
+
+//                    ArrayList<String> strings = new ArrayList<>();
+                    for (Integer i : selectedPositionsList) {
+                        //파일들 복사
+                        FileUtil.copyFile(imagesInFolder.get(i).getPath(), destinationFolderPath);
+                        File copiedFile = new File(imagesInFolder.get(i).getPath());
+                        folderCategoryAct.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(copiedFile)));
+                    }
+
+//                    try {
+//                        DebugUtil.showDebug("FolderFrag, before inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificImageFile(folderCategoryAct, imagesInFolder.get(i).getId(), MediaStore.Images.Media.DATA));//insert 이전
+//                        //insert
+//                        media.insertImage(mCr, destinationFolderPath + "/" + imageName, imageName, imageName);
+//                        DebugUtil.showDebug("FolderFrag, after inserted DB _DATA::" + FileUtil.viewIdOfSpecificImageFileUsingPath(folderCategoryAct, destinationFolderPath + "/" + imageName, MediaStore.Images.Media._ID));//insert 이후
+//                    } catch (FileNotFoundException e) {
+//                        e.printStackTrace();
+//                        DebugUtil.showDebug(e.getMessage());
+//                    }
+//
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            folderCategoryAct.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    onBackPressed();
+                                    imageAdapter.addItems(FileUtil.getImages(folderCategoryAct, album));
+                                    imageAdapter.notifyDataSetChanged();
+                                }
+                            });
+                        }
+                    }, 1500);
+                }
+                else {
+                    DebugUtil.showDebug("GalleryAct, onActivityResult(), 복사할 파일 이름이 중복됨, 퀵픽과 같이 아무런 동작 안 함");
                 }
             }
         }

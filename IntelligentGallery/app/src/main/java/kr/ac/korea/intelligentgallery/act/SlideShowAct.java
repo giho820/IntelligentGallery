@@ -1,6 +1,5 @@
 package kr.ac.korea.intelligentgallery.act;
 
-import android.app.Activity;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -19,6 +18,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import kr.ac.korea.intelligentgallery.R;
+import kr.ac.korea.intelligentgallery.common.ParentAct;
 import kr.ac.korea.intelligentgallery.data.Album;
 import kr.ac.korea.intelligentgallery.data.ImageFile;
 import kr.ac.korea.intelligentgallery.util.DebugUtil;
@@ -28,7 +28,7 @@ import kr.ac.korea.intelligentgallery.util.ImageUtil;
 /**
  * Created by kiho on 2016. 3. 3..
  */
-public class SlideShowAct extends Activity {
+public class SlideShowAct extends ParentAct {
     private int whichFragThatStartsSlideShow;
     private Album album;
     private ArrayList<ImageFile> imageFiles;
@@ -47,6 +47,8 @@ public class SlideShowAct extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.slide_show);
+
+        setLoading(this);
 
         if (!ImageLoader.getInstance().isInited()) {
             ImageLoader.getInstance().init(ImageUtil.intelligentGalleryGlobalImageLoaderConfiguration(this));
@@ -133,15 +135,19 @@ public class SlideShowAct extends Activity {
                 final Integer viewItemID = cursor.getInt(cursor.getColumnIndex(MediaStore.Images.Media._ID));
                 imageFile.setId(viewItemID);
 
-
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         ImageView imageView = new ImageView(SlideShowAct.this);
-
-//                        Bitmap bmp = ImageLoader.getInstance().loadImageSync(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + viewItemID, ImageUtil.displayImageOptions);
-                        Bitmap bmp = ImageLoader.getInstance().loadImageSync(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + viewItemID, new ImageSize(400, 400));
-                        imageView.setImageBitmap(bmp);
+//////                        Bitmap bmp = ImageLoader.getInstance().loadImageSync(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + viewItemID, ImageUtil.displayImageOptions);
+                        String imagePath = FileUtil.getImagePath(SlideShowAct.this, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + viewItemID));
+                        if(ImageLoader.getInstance().getDiskCache().get("file://" + imagePath) != null){
+                            ImageLoader.getInstance().displayImage("file://" + imagePath, imageView);
+                        } else {
+                            ImageLoader.getInstance().displayImage(ImageLoader.getInstance().getDiskCache().get("file://" + imagePath).getAbsolutePath(), imageView);
+                        }
+//                        Bitmap bmp = ImageLoader.getInstance().loadImageSync(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + viewItemID, new ImageSize(400, 400));
+//                        imageView.setImageBitmap(bmp);
                         myViewFlipper.addView(imageView);
                         DebugUtil.showDebug("MakingViewFlipperItemsInSlideShow, onPreExecute, imageView added::" + viewItemID);
                     }

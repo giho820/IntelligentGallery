@@ -19,6 +19,14 @@ public class DebugUtil {
         }
     }
 
+    public static void showDebug(String tag, String location, String msg){
+        if (TextUtil.isNull(msg))
+            return;
+        if (IS_DEBUG_LOG) {
+            Log.d(DEBUG_TAG, tag +", " + location + " :: " + msg);
+        }
+    }
+
     public static void showToast(Context context, int msg) {
         if (IS_TOAST_LOG) {
             Toast.makeText(context, msg, Toast.LENGTH_LONG).show();

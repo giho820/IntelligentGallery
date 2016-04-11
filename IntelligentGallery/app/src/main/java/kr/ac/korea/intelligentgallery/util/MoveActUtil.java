@@ -10,7 +10,11 @@ import android.os.Environment;
 import android.provider.MediaStore;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+
+import kr.ac.korea.intelligentgallery.act.MainAct;
 
 /**
  * Created by kiho on 2015. 9. 9..
@@ -32,8 +36,6 @@ public class MoveActUtil {
         preAct.finish();
 
     }
-
-
 
     /**
      * @param preAct
@@ -98,9 +100,12 @@ public class MoveActUtil {
         Uri mImageCaptureUri=null;
 
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        String url = "/DCIM/Camera/gallery_" + String.valueOf(System.currentTimeMillis()) + ".jpg";
-        mImageCaptureUri = Uri.fromFile(new File(Environment.getExternalStorageDirectory(), url));
-        intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, mImageCaptureUri);
+        Date now = new Date();
+        SimpleDateFormat fileNameFormat = new SimpleDateFormat("yyyyMMdd_kkmmssss");
+        String uri = "/DCIM/Camera/IG_" + String.valueOf(fileNameFormat.format(now)) + ".jpg";
+        mImageCaptureUri = Uri.fromFile(new File(Environment.getExternalStorageDirectory(), uri));
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, mImageCaptureUri);
+        DebugUtil.showDebug(MainAct.currentMission, "MoveActUtil.java, cameraIntent()", String.valueOf(mImageCaptureUri));
 
         activity.startActivityForResult(intent, requestCode);
     }

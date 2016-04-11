@@ -19,7 +19,6 @@ import java.util.ArrayList;
 
 import kr.ac.korea.intelligentgallery.R;
 import kr.ac.korea.intelligentgallery.act.MainAct;
-import kr.ac.korea.intelligentgallery.act.SelectCoverAct;
 import kr.ac.korea.intelligentgallery.data.ImageFile;
 import kr.ac.korea.intelligentgallery.util.DebugUtil;
 import kr.ac.korea.intelligentgallery.util.FileUtil;
@@ -45,7 +44,7 @@ public class SelectCoverImageAdapter extends BaseAdapter {
         this.items = items;
         inflater = LayoutInflater.from(context);
 
-        if(!ImageLoader.getInstance().isInited()) {
+        if (!ImageLoader.getInstance().isInited()) {
             ImageLoader.getInstance().init(ImageUtil.intelligentGalleryGlobalImageLoaderConfiguration(context));
         }
     }
@@ -55,7 +54,7 @@ public class SelectCoverImageAdapter extends BaseAdapter {
         this.context = context;
         inflater = LayoutInflater.from(context);
 
-        if( ImageLoader.getInstance()!=null && !ImageLoader.getInstance().isInited()) {
+        if (ImageLoader.getInstance() != null && !ImageLoader.getInstance().isInited()) {
             ImageLoader.getInstance().init(ImageUtil.intelligentGalleryGlobalImageLoaderConfiguration(this.context));
         }
     }
@@ -128,11 +127,10 @@ public class SelectCoverImageAdapter extends BaseAdapter {
             return convertView;
 
         ImageFile item = getItem(position);
-        SelectCoverAct.selectedPos = position;
         if (item != null) {
             if (!TextUtil.isNull(item.getPath())) {
                 String imagePath = FileUtil.getImagePath(context, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + item.getId()));
-                if(ImageLoader.getInstance().getDiskCache().get("file://" + imagePath) != null){
+                if (ImageLoader.getInstance().getDiskCache().get("file://" + imagePath) != null) {
                     ImageLoader.getInstance().displayImage("file://" + imagePath, holder.image);
                 } else {
                     ImageLoader.getInstance().displayImage(ImageLoader.getInstance().getDiskCache().get("file://" + imagePath).getAbsolutePath(), holder.image);
@@ -149,12 +147,15 @@ public class SelectCoverImageAdapter extends BaseAdapter {
                 DebugUtil.showDebug("FolderFrag, ImageAdapter, getView, onClick() selected position : " + position);
                 /** 갤러리 액티비티(개별 사진 보는 화면) 이동*/
 
-                    DebugUtil.showDebug("선택된 것 :: " + items.get(position).getPath());
-                    Intent intent = new Intent();
-                    intent.putExtra("seletedCoverImageId" , items.get(position).getId());
-                    intent.putExtra("seletedCoverImagePath" , items.get(position).getPath());
-                    DebugUtil.showDebug("items.get(position).getId()::" + items.get(position).getId());
-                    mActivity.setResult(Activity.RESULT_OK);
+                DebugUtil.showDebug("선택된 것 :: " + items.get(position).getPath());
+
+                Intent intent = new Intent(mActivity, MainAct.class);
+                intent.putExtra("seletedCoverImageId", items.get(position).getId());
+                intent.putExtra("seletedCoverImagePath", items.get(position).getPath());
+                DebugUtil.showDebug("items.get(position).getId()::" + items.get(position).getId());
+                DebugUtil.showDebug("items.get(position).getPath()::" + items.get(position).getPath());
+                mActivity.setResult(Activity.RESULT_OK, intent);
+                mActivity.finish();
             }
         });
         return convertView;

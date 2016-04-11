@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <intent-filter>
         <action android:name="android.intent.action.MEDIA_MOUNTED" />
         <data android:scheme="file" />
@@ -41,8 +42,7 @@
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"
-            android:windowSoftInputMode="adjustResize|stateHidden">
-        </activity>
+            android:windowSoftInputMode="adjustResize|stateHidden"></activity>
         <activity
             android:name=".act.CategoryAct"
             android:configChanges="orientation|keyboardHidden|screenSize"
@@ -94,6 +94,7 @@
             </intent-filter>
         </service>
 
+
         <activity
             android:name=".act.MatchingAct"
             android:configChanges="orientation|keyboardHidden|screenSize"
@@ -101,17 +102,27 @@
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="adjustResize|stateHidden" />
 
-        <activity android:name=".act.MoveAct"
+        <activity
+            android:name=".act.MoveAct"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"
-            android:windowSoftInputMode="adjustResize|stateHidden"/>
+            android:windowSoftInputMode="adjustResize|stateHidden" />
 
-        <activity android:name=".act.SelectCoverAct"
+        <activity
+            android:name=".act.SelectCoverAct"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"
-            android:windowSoftInputMode="adjustResize|stateHidden"/>
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+
+        <receiver android:name=".broadcastReceiver.MediaScannerBroadcastReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_SCANNER_FINISHED"/>
+                <action android:name="android.intent.action.MEDIA_SCANNER_STARTED"/>
+                <data android:scheme="file"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

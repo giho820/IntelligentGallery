@@ -103,7 +103,9 @@ public class CommonDialog extends DialogFragment implements View.OnClickListener
         }
 
         edtTextNewFolderName.setVisibility(View.VISIBLE);
-        edtTextNewFolderName.setText(contentMsgRes);
+        edtTextNewFolderName.setText(contentMsgRes.trim());
+        edtTextNewFolderName.setSelection(edtTextNewFolderName.length());//커서를 끝에 위치시킨다
+        edtTextNewFolderName.setFocusable(true);
 //        if (!TextUtil.isNull(contentMsgRes)) {
 //            edtTextNewFolderName.setVisibility(View.VISIBLE);
 //            edtTextNewFolderName.setText(contentMsgRes);

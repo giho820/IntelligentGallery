@@ -81,6 +81,7 @@ public abstract class ParentAct extends ActionBarActivity {
             if (loading == null) {
                 return;
             }
+            DebugUtil.showDebug("showLoading()......");
             loading.show();
         } catch (Exception e) {
             DebugUtil.showDebug("showLoading() : " + e.getMessage());
@@ -179,5 +180,6 @@ public abstract class ParentAct extends ActionBarActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
     }
+
 }
 

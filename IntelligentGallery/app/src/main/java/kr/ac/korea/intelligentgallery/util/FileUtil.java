@@ -6,7 +6,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -60,6 +59,24 @@ public class FileUtil {
         return path;
     }
 
+    public static Integer getImageIDUsingUri(Context context, Uri uri) {
+        Integer idOfImageUri = 0;
+        if (context == null) {
+            DebugUtil.showDebug("FileUtil, context is null");
+            return 0;
+        } else {
+            if (uri != null) {
+                String[] projection = {MediaStore.Images.Media._ID, MediaStore.Images.Media.DATA};
+                Cursor cursor = context.getContentResolver().query(uri, projection, null, null, null);
+                if (cursor != null && cursor.moveToFirst()) {
+                    idOfImageUri = cursor.getInt(cursor.getColumnIndex(MediaStore.Images.Media._ID));
+                    cursor.close();
+                }
+            }
+        }
+        return idOfImageUri;
+    }
+
     //특정 이미지 uri의 상위 폴더에 해당하는 BucketID를 가져오는 함수
     public static String getBucketIdFromImage(Context context, Uri uri) {
         String bucketId = "";
@@ -98,6 +115,26 @@ public class FileUtil {
         return bucketId;
     }
 
+    public static String getRealPathFromURI(Context context, Uri contentUri) {
+        String result = "";
+        Cursor cursor = null;
+        try {
+            String[] proj = {MediaStore.Images.Media.DATA};
+            cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            result = cursor.getString(column_index);
+            DebugUtil.showDebug("FileUtil, getRealPathfromURI(), result:: " + result);
+        } catch (Exception e) {
+            e.getStackTrace();
+            DebugUtil.showDebug("FileUtil, getRealPathfromURI(), " + e.getMessage());
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return result;
+    }
 
     public static Integer getAllImageFilecount(Context context) {
         //미디어 스토리지 이용하는 방법
@@ -131,7 +168,7 @@ public class FileUtil {
         Cursor cursor = mCr.query(uri, projectionForAlbumImage, select, null, null);
         while (cursor.moveToNext()) {
             result = cursor.getCount();
-            DebugUtil.showDebug("위도 경도 정보가 있는 이미지 전체::" + getColumeValue(cursor, projectionForAlbumImage[1]));
+//            DebugUtil.showDebug("위도 경도 정보가 있는 이미지 전체::" + getColumeValue(cursor, projectionForAlbumImage[1]));
         }
         cursor.close();
         DebugUtil.showDebug("위도 경도를 가진 파일의 전체 개수  : " + result);
@@ -139,43 +176,23 @@ public class FileUtil {
         return result;
     }
 
-    public static void updateMediaStorageQuery(Context context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-            File f = new File("file://" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES));
-            Uri contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-            mediaScanIntent.setData(contentUri);
-            context.sendBroadcast(mediaScanIntent);
-        } else {
-            context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory())));
-        }
-    }
 
-    //분류가 되어야하는데 아직 분류가 안 된 것들을 찾아내는 함수
-
-    public static ArrayList<ImageFile> getImagesHavingGPSInfoButNotInInvertedIndex(Context context) {
-        ContentResolver mCr;
+    //위도 경도를 가진 모든 이미지들을 반환하는 함수
+    public static ArrayList<ImageFile> getImagesHavingGPSInfo(Context context) {
         ArrayList<ImageFile> images = new ArrayList<>();
-        ArrayList<ImageFile> imagesNotInInvertedIndexDb = new ArrayList<>();
-
-        String selectSql = "SELECT " + DatabaseConstantUtil.COLUMN_DID +
-                " FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME +
-                " WHERE " + DatabaseConstantUtil.COLUMN_RANK + "=0";
-        Cursor subQueryCursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
-
+        ContentResolver mCr;
         mCr = context.getContentResolver();
+
         Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         String[] projection = {MediaStore.Images.Media._ID};
         String selection = MediaStore.Images.ImageColumns.LATITUDE + " is not null and " + MediaStore.Images.ImageColumns.LONGITUDE + " is not null";
         Cursor cursor = mCr.query(uri, projection, selection, null, null);
 
-        cursor.moveToFirst();
-        while (cursor.moveToNext()) {
+        while (cursor != null && cursor.moveToNext()) {
             ImageFile imageFile = new ImageFile();
 
             Integer viewItemID = cursor.getInt(cursor.getColumnIndex(MediaStore.Images.Media._ID));
             imageFile.setId(viewItemID);
-//            DebugUtil.showDebug(FolderCategoryAct.ttttt + ", 위도 경도 있는 애들 :: " + viewItemID);
 
             String imageFileUriPath = FileUtil.getImagePath(context, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + viewItemID));
             imageFile.setPath(imageFileUriPath);
@@ -183,94 +200,52 @@ public class FileUtil {
             images.add(imageFile);
         }
         cursor.close();
-
-
-        imagesNotInInvertedIndexDb.addAll(images);
-
-        for (int i = imagesNotInInvertedIndexDb.size() - 1; i >= 0; i--) {
-//            DebugUtil.showDebug(FolderCategoryAct.ttttt + "images having gps info :: " + imagesNotInInvertedIndexDb.get(i).getId() + "======");
-
-            while (subQueryCursor != null && subQueryCursor.moveToNext()) {
-                int did = subQueryCursor.getInt(0);
-//                DebugUtil.showDebug(FolderCategoryAct.ttttt + ", inverted 에 있는 did:: " + did);
-                if (imagesNotInInvertedIndexDb.get(i).getId() == did) {
-//                    DebugUtil.showDebug(FolderCategoryAct.ttttt + ", 이미 분류가 완료된 did :: " + did);
-                    if (imagesNotInInvertedIndexDb != null && imagesNotInInvertedIndexDb.size() > i)
-                        imagesNotInInvertedIndexDb.remove(i);
-                    break;
-                }
-            }
-        }
-        subQueryCursor.close();
-
-//        DebugUtil.showDebug(FolderCategoryAct.ttttt + ", 분류가 안된 did 개수 :: " + imagesNotInInvertedIndexDb.size());
-
-        for (ImageFile imgfile : imagesNotInInvertedIndexDb) {
-            DebugUtil.showDebug(FolderCategoryAct.ttttt + ", 분류해야하는 아이디:: " + imgfile.getId());
-        }
-
-        return imagesNotInInvertedIndexDb;
+        return images;
     }
 
+    //
+    public static ArrayList<ImageFile> getImagesHavingGPSInfoButNotInInvertedIndex(ArrayList<ImageFile> images) {
+        ArrayList<ImageFile> result = new ArrayList<>();
 
-//    public static ArrayList<ImageFile> getImagesHavingGPSInfoButNotInInvertedIndex(Context context) {
-//        ContentResolver mCr;
-//        ArrayList<ImageFile> images = new ArrayList<>();
-//        ArrayList<ImageFile> imagesNotInInvertedIndexDb = new ArrayList<>();
-//
-//        String selectSql = "SELECT " + DatabaseConstantUtil.COLUMN_DID +
-//                " FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME +
-//                " WHERE " + DatabaseConstantUtil.COLUMN_RANK + "=0";
-//        Cursor subQueryCursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
-//
-//        mCr = context.getContentResolver();
-//        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-//        String[] projection = {MediaStore.Images.Media._ID};
-//        String selection = MediaStore.Images.ImageColumns.LATITUDE + " is not null and " + MediaStore.Images.ImageColumns.LONGITUDE + " is not null";
-//        Cursor cursor = mCr.query(uri, projection, selection, null, null);
-//
-//        cursor.moveToFirst();
-//        while (cursor.moveToNext()) {
-//            ImageFile imageFile = new ImageFile();
-//
-//            Integer viewItemID = cursor.getInt(cursor.getColumnIndex(MediaStore.Images.Media._ID));
-//            imageFile.setId(viewItemID);
-////            DebugUtil.showDebug(FolderCategoryAct.ttttt + ", 위도 경도 있는 애들 :: " + viewItemID);
-//
-//            String imageFileUriPath = FileUtil.getImagePath(context, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + viewItemID));
-//            imageFile.setPath(imageFileUriPath);
-//
-//            images.add(imageFile);
-//        }
-//        cursor.close();
-//
-//
-//        imagesNotInInvertedIndexDb.addAll(images);
-//
-//        for (int i = imagesNotInInvertedIndexDb.size() - 1; i >= 0; i--) {
-////            DebugUtil.showDebug(FolderCategoryAct.ttttt + "images having gps info :: " + imagesNotInInvertedIndexDb.get(i).getId() + "======");
-//
-//            while (subQueryCursor != null && subQueryCursor.moveToNext()) {
-//                int did = subQueryCursor.getInt(0);
-////                DebugUtil.showDebug(FolderCategoryAct.ttttt + ", inverted 에 있는 did:: " + did);
-//                if (imagesNotInInvertedIndexDb.get(i).getId() == did) {
-////                    DebugUtil.showDebug(FolderCategoryAct.ttttt + ", 이미 분류가 완료된 did :: " + did);
-//                    if (imagesNotInInvertedIndexDb != null && imagesNotInInvertedIndexDb.size() > i)
-//                        imagesNotInInvertedIndexDb.remove(i);
-//                    break;
-//                }
-//            }
-//        }
-//        subQueryCursor.close();
-//
-////        DebugUtil.showDebug(FolderCategoryAct.ttttt + ", 분류가 안된 did 개수 :: " + imagesNotInInvertedIndexDb.size());
-//
-//        for (ImageFile imgfile : imagesNotInInvertedIndexDb) {
-//            DebugUtil.showDebug(FolderCategoryAct.ttttt + ", 분류해야하는 아이디:: " + imgfile.getId());
-//        }
-//
-//        return imagesNotInInvertedIndexDb;
-//    }
+        ArrayList<ImageFile> imageFilesThatHaveGPSInfo = images;
+        ArrayList<ImageFile> imagesNotInInvertedIndexDb = new ArrayList<>();
+        imagesNotInInvertedIndexDb.addAll(imageFilesThatHaveGPSInfo);
+
+        String selectSql = "SELECT " + DatabaseConstantUtil.COLUMN_DID +
+                " FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME +
+                " WHERE " + DatabaseConstantUtil.COLUMN_RANK + "=0";
+        Cursor cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
+
+        if (cursor.getCount() > imageFilesThatHaveGPSInfo.size()) {
+            DebugUtil.showDebug("분류해야하는 이미지보다 디비에 있는 수가 많음, ");
+        }
+
+        if (cursor.getCount() != imageFilesThatHaveGPSInfo.size()) {
+            DebugUtil.showDebug("분류해야하는 이미지 수와 디비에 있는 이미지 수가 다름, 분류해야할 이미지 선별");
+
+            for (int i = imageFilesThatHaveGPSInfo.size() - 1; i >= 0; i--) {
+                cursor.moveToPosition(-1);
+                while (cursor != null && cursor.moveToNext()) {
+                    int did = cursor.getInt(0);
+                    if (imageFilesThatHaveGPSInfo.get(i).getId() == did) {
+                        if (imagesNotInInvertedIndexDb != null && imagesNotInInvertedIndexDb.size() > i) {
+                            imagesNotInInvertedIndexDb.remove(i);
+                        }
+                        break;
+                    }
+                }
+            }
+            cursor.close();
+
+            for (ImageFile imgfile : imagesNotInInvertedIndexDb) {
+                DebugUtil.showDebug(FolderCategoryAct.ttttt + ", 분류해야 하는 아이디:: " + imgfile.getId());
+                result = imagesNotInInvertedIndexDb;
+            }
+        } else {
+            result = null;
+        }
+        return result;
+    }
 
     /**
      * 미디어 스토리지에 쿼리를 사용하여 앨범 가져오기
@@ -279,9 +254,8 @@ public class FileUtil {
      * @return
      */
     public static ArrayList<Album> getAlbums(Context context, String _orderBy) {
-        ContentResolver mCr;
         ArrayList<Album> albums = new ArrayList<>();
-
+        ContentResolver mCr;
         mCr = context.getContentResolver();
         Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         String[] projection = {MediaStore.Images.Media._ID, MediaStore.Images.Media.BUCKET_ID, MediaStore.Images.Media.BUCKET_DISPLAY_NAME, MediaStore.Images.Media.DATA};
@@ -314,7 +288,6 @@ public class FileUtil {
             album.setPath(albumPath);
 
             if (!ids.contains(album.getId())) {
-
                 //쿼리 결과로 테이블에서 나온 순서가 맨 앞에 있는 것이 앨범 커버로 저장 됨
                 Integer albumCoverId = cursor.getInt(cursor.getColumnIndex(MediaStore.Images.Media._ID));
                 album.setCoverID(albumCoverId);
@@ -388,8 +361,8 @@ public class FileUtil {
         String albumID = album.getId();
         String[] projection = {MediaStore.Images.Media._ID};
         String selection = MediaStore.Images.Media.BUCKET_ID + "=" + albumID;
-        String orderBy = MediaStore.Images.Media.DATE_TAKEN; //이미지가 찍힌 날짜 순서 정렬
-        Cursor cursor = mCr.query(uri, projection, selection, null, orderBy + " desc");
+        String orderBy = MediaStore.Images.Media.DATE_TAKEN;
+        Cursor cursor = mCr.query(uri, projection, selection, null, orderBy);
 
         int count = cursor.getCount();
 
@@ -486,7 +459,7 @@ public class FileUtil {
         String selection = MediaStore.Images.Media.BUCKET_ID + "=" + albumID + " and " + MediaStore.Images.ImageColumns.LATITUDE + " is not null and " + MediaStore.Images.ImageColumns.LONGITUDE + " is not null";
         String orderBy = MediaStore.Images.Media.DATE_TAKEN; //이미지가 찍힌 날짜 순서 정렬
 //        Cursor cursor = mCr.query(uri, projection, selection, null, orderBy + " desc" + " limit 0, 30");
-        Cursor cursor = mCr.query(uri, projection, selection, null, FolderCategoryAct.imageOrderby + " limit 0, 30");
+        Cursor cursor = mCr.query(uri, projection, selection, null, FolderCategoryAct.imageOrderby);
 
         while (cursor.moveToNext()) {
             ImageFile imageFile = new ImageFile();
@@ -712,29 +685,6 @@ public class FileUtil {
         return imageFiles;
     }
 
-    public static Uri getImageContentUri(Context context, File imageFile) {
-        String filePath = imageFile.getAbsolutePath();
-        Cursor cursor = context.getContentResolver().query(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                new String[]{MediaStore.Images.Media._ID},
-                MediaStore.Images.Media.DATA + "=? ",
-                new String[]{filePath}, null);
-        if (cursor != null && cursor.moveToFirst()) {
-            int id = cursor.getInt(cursor.getColumnIndex(MediaStore.MediaColumns._ID));
-            cursor.close();
-            return Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "" + id);
-        } else {
-            if (imageFile.exists()) {
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.Images.Media.DATA, filePath);
-                return context.getContentResolver().insert(
-                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-            } else {
-                return null;
-            }
-        }
-    }
-
 
     /**
      * Gets the last image id from the media store
@@ -746,7 +696,7 @@ public class FileUtil {
         mCr = context.getContentResolver();
         final String[] imageColumns = {MediaStore.Images.Media._ID, MediaStore.Images.Media.DATA};
         final String imageOrderBy = MediaStore.Images.Media._ID + " DESC";
-        Cursor imageCursor = context.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, imageColumns, null, null, imageOrderBy);
+        Cursor imageCursor = mCr.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, imageColumns, null, null, imageOrderBy);
         if (imageCursor.moveToFirst()) {
             int id = imageCursor.getInt(imageCursor.getColumnIndex(MediaStore.Images.Media._ID));
             String fullPath = imageCursor.getString(imageCursor.getColumnIndex(MediaStore.Images.Media.DATA));
@@ -786,7 +736,6 @@ public class FileUtil {
 
         return result;
     }
-
 
 
     //
@@ -842,8 +791,19 @@ public class FileUtil {
      * @return
      */
     public static String getFileNameFromPath(String path) {
-        File temp = new File(path);
-        return temp.getName();
+        try {
+            File temp = new File(path);
+            if (temp.exists())
+                return temp.getName();
+            else {
+                return null;
+            }
+        } catch (Exception e){
+            e.getStackTrace();
+            e.getMessage();
+            DebugUtil.showDebug("FileUtil, getFileNameFromPath(), exception 발생");
+            return null;
+        }
     }
 
     /**
@@ -927,7 +887,7 @@ public class FileUtil {
         try {
             File newFile = new File(src);
             String fileName = newFile.getName();
-            DebugUtil.showDebug("FileUtil, fileName ::" + fileName);
+            DebugUtil.showDebug("복사하기, FileUtil, fileName ::" + fileName);
 
             FileInputStream fin = new FileInputStream(src);
             FileOutputStream fout = new FileOutputStream(dest + "/" + fileName);
@@ -940,13 +900,8 @@ public class FileUtil {
 
             inc.transferTo(0, fsize, outc);
 
-            inc.close();
-            outc.close();
-            fin.close();
-            fout.close();
             //입출력을 위한 버퍼를 할당한다.
             ByteBuffer buf = ByteBuffer.allocateDirect(1024);
-
 
             while (true) {
                 if (inc.read(buf) == -1)
@@ -954,8 +909,13 @@ public class FileUtil {
                 buf.flip();
                 outc.write(buf);
                 buf.clear();
+                System.out.print("=");
             }
-
+            DebugUtil.showDebug("----------------");
+            inc.close();
+            outc.close();
+            fin.close();
+            fout.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1065,19 +1025,40 @@ public class FileUtil {
         }
     }
 
+    public static void updateMediaStorageQuery(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            File f = new File("file://" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES));
+            Uri contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            mediaScanIntent.setData(contentUri);
+            context.sendBroadcast(mediaScanIntent);
+        } else {
+            context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory())));
+        }
+    }
+
+    //미디어 스토어 풀스캔하는 함수
+    //cf. 개별 파일 스캔은 util -> SingleMediaScanner.java
     public static void callBroadCast(Context context) {
         if (context == null) {
-            DebugUtil.showDebug("설마 널? ");
+            DebugUtil.showDebug("FileUtil, callBroadCast is null");
             return;
         }
-        if (Build.VERSION.SDK_INT >= 14) {
-            Log.e("-->", " >= 14");
-            MediaScannerConnection.scanFile(context, new String[]{Environment.getExternalStorageDirectory().toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
-                public void onScanCompleted(String path, Uri uri) {
-                    Log.e("ExternalStorage", "Scanned " + path + ":");
-                    Log.e("ExternalStorage", "-> uri=" + uri);
-                }
-            });
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            File f = new File("file://" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES));
+            Uri contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            mediaScanIntent.setData(contentUri);
+            context.sendBroadcast(mediaScanIntent);
+//        }
+//        else if (Build.VERSION.SDK_INT >= 14) {
+//            Log.e("-->", " >= 14");
+//            MediaScannerConnection.scanFile(context, new String[]{Environment.getExternalStorageDirectory().toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
+//                public void onScanCompleted(String path, Uri uri) {
+//                    Log.e("ExternalStorage", "Scanned " + path + ":");
+//                    Log.e("ExternalStorage", "-> uri=" + uri);
+//                }
+//            });
         } else {
             Log.e("-->", " < 14");
             context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory())));
@@ -1137,19 +1118,20 @@ public class FileUtil {
         return result;
     }
 
-    public static String viewIdOfSpecificImageFileUsingPath(Context context, String path, String columnName){
+    public static String viewIdOfSpecificImageFileUsingPath(Context context, String path, String columnName) {
         String result = "";
         final Context con = context;
         final ContentResolver mCr = context.getContentResolver();
         final Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        final String selection = MediaStore.Images.Media.DATA + " = '" + path +"'";
+        final String selection = MediaStore.Images.Media.DATA + " = '" + path + "'";
         final String[] projection = {columnName};
 
         Cursor c = mCr.query(uri, projection, selection, null, null);
         while (c != null && c.moveToNext()) {
             String data = c.getString(c.getColumnIndexOrThrow(projection[0])).toString();
-            result += "FileUtil, viewIdOfSpecificImageFileUsingPath(), image :: " + path + "'s "+ columnName+" :: " + data +"\n";
+            result += "FileUtil, viewIdOfSpecificImageFileUsingPath(), image :: " + path + "'s " + columnName + " :: " + data + "\n";
         }
+        c.close();
         return result;
     }
 
@@ -1194,5 +1176,6 @@ public class FileUtil {
         }
         return result;
     }
+
 
 }

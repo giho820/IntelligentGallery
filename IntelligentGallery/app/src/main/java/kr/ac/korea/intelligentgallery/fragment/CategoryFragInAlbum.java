@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -336,8 +335,8 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
                         imageFiles.add(categories.get(i).getContainingImages().get(0));
                         Category newCategory = new Category();
                         newCategory.setcID(currentCID);
-                        //카테고리 아이디를 이름으로 변환
 
+                        //카테고리 아이디를 이름으로 변환
                         String cNameOriginal = DiLabClassifierUtil.centroidClassifier.getCategoryName(currentCID);
                         String cName = DiLabClassifierUtil.cNameConverter.convert(cNameOriginal);
 
@@ -355,17 +354,14 @@ public class CategoryFragInAlbum extends ParentFrag implements OnBackPressedList
                         newCategories.add(newCategory);
                         categories.remove(i);
                     }
-                    for (int i = 0; i < categories.size(); i++) {
 
-                    }
 //                    DebugUtil.showDebug(TAG + "doInBackground::after::categories::size::" + categories.size());
 //                    DebugUtil.showDebug(TAG + "doInBackground::newCategories::size::" + newCategories.size());
-
                 }
             }
 
             //위치정보를 가지고 있으나 inverted Index db로 분류되지 않는 사진들을 분류하는 부분
-            Log.d(FolderCategoryAct.ttttt, "" + FileUtil.getImagesHavingGPSInfoButNotInInvertedIndex(mContext).size());
+
             return newCategories;
 
         }

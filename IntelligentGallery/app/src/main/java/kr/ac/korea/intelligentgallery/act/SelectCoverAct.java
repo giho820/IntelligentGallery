@@ -31,7 +31,7 @@ public class SelectCoverAct extends ParentAct{
     public static List<Integer> selectedPositionsList = null; //그리드 뷰에서 선택된 것들을 중복을하지 않고 담기위한 자료형
     public GridView gridViewSelectCoverImage; //사진들이 담겨진 그리드 뷰
     public SelectCoverImageAdapter imageAdapter;
-    public static Integer selectedPos = 0;
+    public static Integer selectedPos = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,10 +57,6 @@ public class SelectCoverAct extends ParentAct{
 
         ArrayList<ImageFile> updatedImageFiles = FileUtil.getImages(this, album);
         imageAdapter.addItems(updatedImageFiles);
-
-        imageAdapter.getItem(selectedPos);
-        DebugUtil.showDebug("");
-
 
     }
 
@@ -92,8 +88,6 @@ public class SelectCoverAct extends ParentAct{
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-
-
     }
 
 }

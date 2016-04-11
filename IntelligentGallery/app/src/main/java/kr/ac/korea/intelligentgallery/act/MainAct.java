@@ -22,13 +22,16 @@ import android.widget.TextView;
 import com.example.dilab.sampledilabapplication.Sample.Models.SampleScoreData;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 
 import kr.ac.korea.intelligentgallery.R;
 import kr.ac.korea.intelligentgallery.adapter.AlbumAdapter;
 import kr.ac.korea.intelligentgallery.adapter.CategroyAdapter;
 import kr.ac.korea.intelligentgallery.asynctask.ClassifyingWhenExternalImagesExistAsyncTask;
+import kr.ac.korea.intelligentgallery.broadcastReceiver.MediaScannerBroadcastReceiver;
 import kr.ac.korea.intelligentgallery.common.Definitions;
 import kr.ac.korea.intelligentgallery.common.ExpandableHeightGridView;
 import kr.ac.korea.intelligentgallery.common.ParentAct;
@@ -51,7 +54,6 @@ import kr.ac.korea.intelligentgallery.util.TextUtil;
 
 public class MainAct extends ParentAct implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
 
-    private ParentAct parentAct;
     // 데이터베이스 헬퍼
     private DatabaseHelper databaseHelper;
 
@@ -71,7 +73,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
     private ArrayList<Album> albums;
     public static int GridViewFolderNumColumns = 3; //앨범 그리드 뷰 에서 한 줄에 보여줄 앨범의 갯수
 
-    private String albumOrderBy = SharedPreUtil.getInstance().getSharedPrefs().getString(SharedPreUtil.ALBUM_ORDER_BY, MediaStore.Images.Media.SIZE);
+    public static String albumOrderBy = "";
 
     // 카테고리 그리드뷰
     private ExpandableHeightGridView mGridViewCategory;
@@ -88,15 +90,21 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
     //커버이미지 변경 대상
     int selectedIdxInCoverSelect = 0;
 
+    // 방금 찍은 사진에 대한 처리
+    public static String currentMission = "카메라 바로 나오기";
+    public static Uri mImageCaptureUri = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         DebugUtil.showDebug("MainAct, onCreate()");
+
         setContentView(R.layout.activity_main);
 
-
         databaseHelper = DatabaseHelper.getInstacnce(this);
+
+        SharedPreUtil.getInstance().putPreference(SharedPreUtil.ALBUM_ORDER_BY, MediaStore.Images.Media.DATE_TAKEN + " desc");
+        albumOrderBy = SharedPreUtil.getInstance().getSharedPrefs().getString(SharedPreUtil.ALBUM_ORDER_BY, MediaStore.Images.Media.DATE_TAKEN + " desc");
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.inflateMenu(R.menu.menu_main);
@@ -113,14 +121,13 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
         // set CommonLoadingDialog to show loading progressbar
         setLoading(this);
 
-
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 updateTermOfLoadingCategory++;
+                tvCategoryProgrssCount.setText(DatabaseCRUD.getImagesIdsInInvertedIndexDb().size() + " / " + FileUtil.getAllImageFilesThatHaveGPSInfoCount(MainAct.this));
                 if (updateTermOfLoadingCategory % 4 == 0) {
                     loadCategory();
-                    tvCategoryProgrssCount.setText(DatabaseCRUD.getImagesIdsInInvertedIndexDb().size() + " / " + FileUtil.getAllImageFilesThatHaveGPSInfoCount(MainAct.this));
                     mCategroyAdapterCategory.notifyDataSetChanged();
                 } else {
                     if (SharedPreUtil.getInstance().getBooleanPreference(SharedPreUtil.IS_NOT_FIRST_TIME_TO_START_APP) == true) {
@@ -129,8 +136,6 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                 }
             }
         };
-
-
     }
 
     @Override
@@ -141,26 +146,60 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
         intentFilter.addAction("android.intent.action.classifying");
         registerReceiver(mBroadcastReceiver, intentFilter);
 
-        FileUtil.updateMediaStorageQuery(this);
+        //기타 사진이 아닌 파일들에 대한 적용
+//        FileUtil.updateMediaStorageQuery(this);
+        //사진은 적용이 된다
+        if (!MediaScannerBroadcastReceiver.mMedaiScanning) {
+            DebugUtil.showDebug(MainAct.currentMission, "mainAct, onResume()", "현재 풀스캔 중이지 않음, 풀스캔 시작");
+            FileUtil.callBroadCast(this);
+        } else {
+            DebugUtil.showDebug(MainAct.currentMission, "mainAct, onResume()", "현재 풀스캔 중");
+        }
 
         //앨범 로드
         loadAlbums();
 
+//                Integer fixedCoverImageId = SharedPreUtil.getInstance().getIntPreference(SharedPreUtil.ALBUM_COVER_IMAGE_ID);
+//                if(fixedCoverImageId != 0){
+//                    DebugUtil.showDebug("FileUtil, getAlbums, 고정된 앨범 커버 이미지 아이디 : " + fixedCoverImageId);
+//                    album.setCoverID(fixedCoverImageId);
+//                    albumCoverImagePath = FileUtil.getImagePath(context, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + fixedCoverImageId));
+//                    album.setCoverImagePath(albumCoverImagePath);
+//                }
+
         //카테고리 로드
         loadCategory();
 
-//최초의 분류가 진행이 되고나서
+        //최초의 분류가 진행이 되고나서
         if (SharedPreUtil.getInstance().getBooleanPreference(SharedPreUtil.IS_NOT_FIRST_TIME_TO_START_APP) == true) {
-            if (FileUtil.getImagesHavingGPSInfoButNotInInvertedIndex(this) != null) {
-                //분류가 진행되지 않은 사진을 분류한다.
-                Integer notClassifiedImageCount = FileUtil.getImagesHavingGPSInfoButNotInInvertedIndex(this).size();
-                DebugUtil.showDebug("MainAct, onResume(), 분류되지 않은 이미지의 개수:: " + notClassifiedImageCount);
-                if (notClassifiedImageCount > 0) {//??
-                    new ClassifyingWhenExternalImagesExistAsyncTask(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, notClassifiedImageCount);
+
+            ArrayList<Integer> dbImages = new ArrayList<>();
+            ArrayList<ImageFile> mediaImages = new ArrayList<>();
+            ArrayList<Integer> uselessDids = new ArrayList<>();
+            dbImages = DatabaseCRUD.getImagesIdsInInvertedIndexDb();
+            mediaImages = FileUtil.getImagesHavingGPSInfo(this);
+            int dbImageCnt = dbImages.size();
+            int mediaImageCnt = mediaImages.size();
+            if (dbImageCnt > mediaImageCnt) {
+                DebugUtil.showDebug("MainAct, onResume(), 디비에 있는 사진 > 미디어 디비에 있는 사진, 디비 삭제 진행");
+                //외부에서 사진이 지워져서 필요없는 사진이 DB에 남아았다면 이를 제거하는 함수
+                DiLabClassifierUtil.deleteUselessDB(this);
+                loadCategory();
+            } else if (dbImageCnt < mediaImageCnt) {
+                DebugUtil.showDebug("MainAct, onResume(), 디비에 있는 사진 < 미디어 디비에 있는 사진, 분류 안한 이미지 찾아서 분류 진행");
+                ArrayList<ImageFile> imageFilesThatHaveGPSInfo = new ArrayList<>();
+                ArrayList<ImageFile> imageFilesThatNeedToBeClassified = new ArrayList<>();
+                imageFilesThatHaveGPSInfo = FileUtil.getImagesHavingGPSInfo(this);
+                if (imageFilesThatHaveGPSInfo != null && imageFilesThatHaveGPSInfo.size() > 0) {
+                    imageFilesThatNeedToBeClassified = FileUtil.getImagesHavingGPSInfoButNotInInvertedIndex(imageFilesThatHaveGPSInfo);
+                    if (imageFilesThatNeedToBeClassified != null && imageFilesThatNeedToBeClassified.size() > 0) {
+                        new ClassifyingWhenExternalImagesExistAsyncTask(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, imageFilesThatNeedToBeClassified);
+                    }
                 }
+            } else {
+                DebugUtil.showDebug("MainAct, onResume(), 디비에 있는 사진 == 미디어 디비에 있는 사진, 분류기 동작 안함");
             }
         }
-
     }
 
 
@@ -175,6 +214,15 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
         }
 
         tvFoldersNum.setText("" + albums.size());
+        tvFoldersNum.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!TextUtil.isNull(String.valueOf(mImageCaptureUri))) {
+                    DebugUtil.showDebug(currentMission, "MainAct, loadAlbum()", String.valueOf(mImageCaptureUri));
+                    DebugUtil.showDebug(currentMission, "MainAct, loadAlbum()", "uri's id? " + FileUtil.getImageIDUsingUri(MainAct.this, mImageCaptureUri));
+                }
+            }
+        });
         albumAdapter = new AlbumAdapter(this, this, albums);
 
         // Set the grid adapter
@@ -222,7 +270,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                     imageFileCategory.setIsDirectory(true);
                     imageFileCategoryList.add(imageFileCategory);
                 } else {
-                    DebugUtil.showDebug("MainAct, loadCategory(), representImageID, " + representImageID + ", cName::" + cName);
+//                    DebugUtil.showDebug("MainAct, loadCategory(), representImageID, " + representImageID + ", cName::" + cName);
                 }
             }
         }
@@ -356,12 +404,10 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                 mCategroyAdapterCategory.notifyDataSetChanged();
             }
 
-
             //change menu
             toolbar.getMenu().clear();
             toolbar.inflateMenu(R.menu.menu_main);
             getSupportActionBar().setTitle("폴더"); //액션바의 타이틀을 설정하는 방법
-
 
         } else {
             super.onBackPressed();
@@ -395,7 +441,18 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
             /** 카메라 사진 */
             case R.id.action_camera:
                 DebugUtil.showDebug("move to camera");
-                MoveActUtil.cameraIntent(MainAct.this, ConstantUtil.MAINACT_REQUESTCODE_FOR_CAMERA_INTENT);
+//                MoveActUtil.cameraIntent(MainAct.this, ConstantUtil.MAINACT_REQUESTCODE_FOR_CAMERA_INTENT);
+
+                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                Date now = new Date();
+                SimpleDateFormat fileNameFormat = new SimpleDateFormat("yyyyMMdd_kkmmssss");
+                String uri = "/DCIM/Camera/IG_" + String.valueOf(fileNameFormat.format(now)) + ".jpg";
+                mImageCaptureUri = Uri.fromFile(new File(Environment.getExternalStorageDirectory(), uri));
+                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, mImageCaptureUri);
+                DebugUtil.showDebug(MainAct.currentMission, "MoveActUtil.java, cameraIntent()", String.valueOf(mImageCaptureUri));
+
+                int requestCode = ConstantUtil.MAINACT_REQUESTCODE_FOR_CAMERA_INTENT;
+                startActivityForResult(cameraIntent, requestCode);
                 break;
 
             /** 검색하기 */
@@ -416,10 +473,12 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                         switch (which) {
                             case CommonDialog.POSITIVE:
 
+                                showLoading();
                                 // inputText : 사용자가 검색 창에 입력한 텍스트
                                 if (inputText == null || inputText.equals("")) {
                                     textViewString = "Please write input text";
                                     DebugUtil.showToast(MainAct.this, textViewString);
+                                    hideLoading();
                                     return;
                                 }
 
@@ -445,6 +504,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                                         Intent searchResultIntent = new Intent(MainAct.this, SearchResultAct.class);
                                         searchResultIntent.putIntegerArrayListExtra("keywordSearchResult", keywordSearchResult);
                                         searchResultIntent.putIntegerArrayListExtra("searchResult", searchResult);
+                                        hideLoading();
                                         MoveActUtil.moveActivity(MainAct.this, searchResultIntent, -1, -1, false, false);
                                     }
                                 }, 1500);
@@ -452,6 +512,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
 
                             case CommonDialog.NEGATIVE:
                                 DebugUtil.showDebug("MainAct, onOptionItemSelected(), case R.id.action_searching, case Negative ");
+                                hideLoading();
                                 break;
                         }
                     }
@@ -509,7 +570,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                 break;
 
             case R.id.action_arranging_orderby_date_added:
-                albumOrderBy = MediaStore.Images.Media.DATE_ADDED;
+                albumOrderBy = MediaStore.Images.Media.DATE_ADDED + " desc";
                 SharedPreUtil.getInstance().putPreference(SharedPreUtil.ALBUM_ORDER_BY, MediaStore.Images.Media.DATE_ADDED);
                 albums = FileUtil.getAlbums(this, albumOrderBy);
                 albumAdapter.removeAllAlbums();
@@ -518,7 +579,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                 break;
 
             case R.id.action_arranging_orderby_date_taken:
-                albumOrderBy = MediaStore.Images.Media.DATE_TAKEN;
+                albumOrderBy = MediaStore.Images.Media.DATE_TAKEN + " desc";
                 SharedPreUtil.getInstance().putPreference(SharedPreUtil.ALBUM_ORDER_BY, MediaStore.Images.Media.DATE_TAKEN);
                 albums = FileUtil.getAlbums(this, albumOrderBy);
                 albumAdapter.removeAllAlbums();
@@ -601,6 +662,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                             if (MainAct.longClicked) {
                                 albumAdapter.addItems(albums);
                                 onBackPressed();
+                                onResume();
                             }
                         }
                     }, 1000);
@@ -690,8 +752,13 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                                             FileUtil.updateAlbumName(MainAct.this, albums.get(tempSelectedIndex).getId(), fileNow.getPath());
                                             DebugUtil.showDebug("rename folder:: GalleryAct, after inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificAlbum(MainAct.this, albums.get(tempSelectedIndex).getId()));//업데이트 이후
 
-                                            sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(filePre)));
-//                                            FileUtil.callBroadCast(MainAct.this);//? 안되는 것 같지 ->
+//                                            sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(filePre)));
+                                            if (!MediaScannerBroadcastReceiver.mMedaiScanning) {
+                                                DebugUtil.showDebug(currentMission, "MainAct, 이름 변경하는 부분", "현재 풀스캔 중이지 않음");
+                                                FileUtil.callBroadCast(MainAct.this);
+                                            } else {
+                                                DebugUtil.showDebug(currentMission, "MainAct, 이름 변경하는 부분", "현재 풀스캔 중");
+                                            }
 //                                                }
 //                                            });
 
@@ -763,7 +830,6 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                         startActivityForResult(intent, ConstantUtil.GALLERYACT_REQUESTCODE_FOR_SELECT_COVER_IMAGE);
 //                        DebugUtil.showDebug("coverImages id ::" + basicAlbumCoverId);
 
-
                         //유지하려면 미디어 디비에 앨범의 썸네일을 저장할 방법을 찾아야하나..66
                         //혹은 뒤로가기 할때 onResume에서 앨범을 다시 불러오지 않게 해야할 라나.
                         //아예 계속 유지되어야하는 값이니까..
@@ -814,41 +880,53 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //data
+        DebugUtil.showDebug(currentMission, "MainAct, onActivityResult()", "resultCode;; " + resultCode);
+        DebugUtil.showDebug(currentMission, "MainAct, onActivityResult()", "requestCode;; " + requestCode);
+
         if (resultCode == RESULT_OK) {
-            /** 사진을 찍고 다시 MainAct로 돌아왔을 때 */
+            // 사진을 찍고 다시 MainAct로 돌아왔을 때
             if (requestCode == ConstantUtil.MAINACT_REQUESTCODE_FOR_CAMERA_INTENT) {
-                DebugUtil.showDebug("MainAct, onActivityResult, requestcode : ConstantUtil.MAINACT_REQUESTCODE_FOR_CAMERA_INTENT");
+//                Uri uri = mImageCaptureUri;
+//                DebugUtil.showDebug(currentMission, "MainAct, onActivityResult()", "RESULT_OK Uri:::" + uri);
 
-//                새로 촬영한 데이터의 id를 미디어스토리이지에서 가져와야한다
-                Integer lastImageId = FileUtil.getLastImageId(this);
-                DebugUtil.showDebug("MainAct, onActivityResult(), lastImageId : " + lastImageId);
+//                msc.connect();
 
-//                FileUtil.updateMediaStorageQueryFromExternalStorage(this);
-                FileUtil.updateMediaStorageQuery(this);
-                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI+"/"+lastImageId)));
+                //풀 스캔
+                if (!MediaScannerBroadcastReceiver.mMedaiScanning) {
+                    DebugUtil.showDebug(MainAct.currentMission, "MainAct, onActivityResult()", "현재 풀스캔 중이지 않음, 풀스캔 시작");
+                    FileUtil.callBroadCast(this);
+                } else {
+                    DebugUtil.showDebug(MainAct.currentMission, "MainAct, onActivityResult()", "현재 풀스캔 중, 개별 사진 스캔 시작");
+                    //개별 사진 스캔
+//                    String path = FileUtil.getRealPathFromURI(this, uri);
+//                    DebugUtil.showDebug("스캔하기", "MainAct, onActivityResult() FileUtil.getRealPathFromURI() 호출", "path::" + path);
+//                    File file = new File(path);
+//                    new SingleMediaScanner(this, file);
+                }
 
-//                새로 촬영을 한 사진을 분류해야한다
-                //inverted index table insert
-                /** 특정 한 개의 이미지에 대해서 K 개의 카테고리를 생성하여 분류하는 프로세스를 진행한다 */
-                DiLabClassifierUtil.classifySpecificImageFile("helloworld", lastImageId);//분류에 필요한 키워드의 경우 사진앱은 임의의 문자열
-                //분류기 진행 에러 해결할 것
-//                DiLabClassifierUtil.classifySpecificImageFile("helloworld", lastImageId);//분류에 필요한 키워드의 경우 사진앱은 임의의 문자열
-
-                albumAdapter.notifyDataSetChanged();
+                if (albumAdapter != null) {
+                    albumAdapter.notifyDataSetChanged();
+                }
 
             }
 
             if (requestCode == ConstantUtil.GALLERYACT_REQUESTCODE_FOR_SELECT_COVER_IMAGE) {
-//                int receivedId = data.getIntExtra("seletedCoverImageId", 0);
-//                String receivedPath = data.getStringExtra("seletedCoverImagePath");
-//
-//                DebugUtil.showDebug("GALLERYACT_REQUESTCODE_FOR_SELECT_COVER_IMAGE:: received id??::" +receivedId +", " + receivedPath);
-//
-//                String newfile = FileUtil.getImagePath(this, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + receivedId));
-//                albums.get(selectedIdxInCoverSelect).setCoverID(receivedId);
-//                albums.get(selectedIdxInCoverSelect).setCoverImagePath(receivedPath);
-//                albumAdapter.addItems(albums);
-//                albumAdapter.notifyDataSetChanged();
+                int receivedId = data.getIntExtra("seletedCoverImageId", 0);
+                String receivedPath = data.getStringExtra("seletedCoverImagePath");
+
+                DebugUtil.showDebug("GALLERYACT_REQUESTCODE_FOR_SELECT_COVER_IMAGE:: received id??::" +receivedId +", " + receivedPath);
+
+                albums.get(selectedIdxInCoverSelect).setCoverID(receivedId);
+                String newfile = FileUtil.getImagePath(this, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + receivedId));
+                albums.get(selectedIdxInCoverSelect).setCoverImagePath(newfile);
+
+                SharedPreUtil.getInstance().putPreference(SharedPreUtil.ALBUM_COVER_IMAGE_ID, receivedId);
+
+                albumAdapter.addItems(albums);
+                albumAdapter.notifyDataSetChanged();
+
+                onBackPressed();
             }
         }
         if (resultCode != RESULT_OK) {

@@ -23,6 +23,9 @@ public class SharedPreUtil implements OnSharedPreferenceChangeListener {
 	public final static String ALBUM_ORDER_BY = "ALBUM_ORDER_BY";
 	public final static String FOLDER_CATEGORY_ORDER_BY = "FOLDER_CATEGORY_ORDER_BY";
 
+	//cover image Path
+	public final static String ALBUM_COVER_IMAGE_ID = "ALBUM_COVER_IMAGE_ID";
+
 	public static SharedPreUtil getInstance() {
 		if (instance == null) {
 			instance = new SharedPreUtil();

@@ -11,6 +11,7 @@ import com.example.dilab.sampledilabapplication.Sample.SampleMNClassifier;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
+import kr.ac.korea.intelligentgallery.data.ImageFile;
 import kr.ac.korea.intelligentgallery.database.DatabaseCRUD;
 import kr.ac.korea.intelligentgallery.database.util.DatabaseConstantUtil;
 import kr.ac.korea.intelligentgallery.intelligence.Ranker.SemanticMatching;
@@ -63,20 +64,24 @@ public class DiLabClassifierUtil {
         }
 
         //MNClassifer 적용하여 rank 0에 넣기 / score를 1.0으로 저장할 예정
+        LinkedHashMap<Integer, String> top0Info = new LinkedHashMap<>();
         String[] categories = new String[categoriesArrayList.size()];
         for (int i = 0; i < categoriesArrayList.size(); i++) {
             categories[i] = categoriesArrayList.get(i);
         }
-
         String top0Name = DiLabClassifierUtil.mnClassifier.classifying(categories);
         Integer top0ID = categoryIDsArrayList.get(0);
-        LinkedHashMap<Integer, String> top0Info = new LinkedHashMap<>();
         top0Info.put(top0ID, top0Name);
+        DebugUtil.showDebug("DiLabClassifierUtil, top0ID::" + top0ID +", ::top0Name::" + top0Name);
 
-        if (!TextUtil.isNull(top0Name) && categories != null && categories.length >= 0) {
+        if (categories != null && categories.length >= 0) {
             for (int i = categories.length - 1; i >= 0; i--) {
-                if (categories[i].contains(top0Name)) {
-                    top0ID = categoryIDsArrayList.get(i);
+                DebugUtil.showDebug("DiLabClassifierUtil, i::" + i +", ::categories[i]::" + categories[i]);
+                if(!TextUtil.isNull(top0Name)){
+                    if (categories[i].contains(top0Name)) {
+                        top0ID = categoryIDsArrayList.get(i);
+                        DebugUtil.showDebug("DiLabClassifierUtil, top0ID::" + top0ID +", ::top0Name::" + top0Name);
+                    }
                 }
             }
         }
@@ -86,5 +91,41 @@ public class DiLabClassifierUtil {
         DatabaseCRUD.execRawQuery(rawQuery);
 
         return top0Info;
+    }
+
+    public static void deleteUselessDB(Context context){
+        // 외부에서 사진을 지웠을 때 같은 상황
+        // 만일 외부에서 사진을 지워서 디비의 개수가 쿼리에 있는 분류해야할 사진의 개수보다 많다면
+        ArrayList<Integer> dbImages = new ArrayList<>();
+        ArrayList<ImageFile> mediaImages = new ArrayList<>();
+        ArrayList<Integer> uselessDids = new ArrayList<>();
+        dbImages = DatabaseCRUD.getImagesIdsInInvertedIndexDb();
+        mediaImages = FileUtil.getImagesHavingGPSInfo(context);
+        uselessDids = dbImages;
+        int dbImageCnt = dbImages.size();
+        int mediaImageCnt = mediaImages.size();
+
+        DebugUtil.showDebug("zzz", "ClassifyingUsingAsyncTask, ", "" + dbImageCnt);
+        DebugUtil.showDebug("zzz", "ClassifyingUsingAsyncTask, ", "" + mediaImageCnt);
+        if (mediaImageCnt < dbImageCnt) {
+            DebugUtil.showDebug("zzz, 외부에서 사진을 지워서 디비에 불필요한 이미지가 저장된 상태");
+
+            for (int i = dbImageCnt -1; i >= 0; i--) {
+                DebugUtil.showDebug("zzz, dbImages.get("+i + ") :: " + dbImages.get(i) + "===============");
+                for(int j = 0; j < mediaImageCnt; j ++) {
+                    DebugUtil.showDebug("zzz, mediaImages.get("+j + ").getId :: " + mediaImages.get(j).getId());
+                    if(dbImages.get(i).equals(mediaImages.get(j).getId()) ){
+                        DebugUtil.showDebug("zzz. did 같음");
+                        uselessDids.remove(i);
+                        break;
+                    }
+                }
+            }
+
+        }
+        for(Integer uselessImageId : uselessDids){
+            DebugUtil.showDebug("zzz, uselessImage 지워야하는 이미지 :: " + uselessImageId);
+            DatabaseCRUD.deleteSpecificIdQuery(uselessImageId);
+        }
     }
 }

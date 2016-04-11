@@ -49,6 +49,7 @@ import java.util.Set;
 import kr.ac.korea.intelligentgallery.R;
 import kr.ac.korea.intelligentgallery.adapter.ItemDecorationMatchingImg;
 import kr.ac.korea.intelligentgallery.adapter.MatchingImageRecyclerAdapter;
+import kr.ac.korea.intelligentgallery.broadcastReceiver.MediaScannerBroadcastReceiver;
 import kr.ac.korea.intelligentgallery.common.Definitions;
 import kr.ac.korea.intelligentgallery.common.ParentAct;
 import kr.ac.korea.intelligentgallery.common.ViewPagerFixed;
@@ -118,7 +119,7 @@ public class GalleryAct extends ParentAct {
         }
 
         currentCategoryId = currentImageFileImage.getCategoryId();
-        if(currentCategoryId == null){
+        if (currentCategoryId == null) {
             currentCategoryId = DatabaseCRUD.getCategoryIdUsingImageId(currentImageFileImage.getId());
         }
         DebugUtil.showDebug("GalleryAct, onCreate(), currentImageFile cid:: " + currentCategoryId);
@@ -128,7 +129,8 @@ public class GalleryAct extends ParentAct {
         setSupportActionBar(galleryToolbar);
 
         //툴바의 상단에 파일의 이름을 표기
-        getSupportActionBar().setTitle(FileUtil.getFileNameFromPath(imagesInSameFolder.get(selectedPostion).getPath()));
+        if (!TextUtil.isNull(FileUtil.getFileNameFromPath(imagesInSameFolder.get(selectedPostion).getPath())))
+            getSupportActionBar().setTitle(FileUtil.getFileNameFromPath(imagesInSameFolder.get(selectedPostion).getPath()));
         galleryToolbar.setTitleTextColor(getResources().getColor(R.color.c_ffffffff));
         galleryToolbar.setNavigationIcon(getResources().getDrawable(R.drawable.ic_backkey));
 
@@ -390,10 +392,15 @@ public class GalleryAct extends ParentAct {
                                         ContentResolver mCr = getContentResolver();
                                         ContentValues values = new ContentValues();
                                         values.put(MediaStore.Images.Media.DATA, fileNow.getAbsolutePath());
-                                        mCr.update(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values, MediaStore.Images.ImageColumns._ID +"=" + currentImageFileImage.getId(), null);
+                                        mCr.update(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values, MediaStore.Images.ImageColumns._ID + "=" + currentImageFileImage.getId(), null);
                                         DebugUtil.showDebug("GalleryAct, case R.id.action_renaming after update DB _DATA::" + FileUtil.viewColumnInfoOfSpecificImageFile(GalleryAct.this, currentImageFileImage.getId(), MediaStore.Images.Media.DATA));//업데이트 이후
 
-                                        FileUtil.callBroadCast(mContext);
+                                        if (!MediaScannerBroadcastReceiver.mMedaiScanning) {
+                                            DebugUtil.showDebug(MainAct.currentMission, "GalleryAct, 이름 변경하는 부분", "현재 풀스캔 중이지 않음");
+                                            FileUtil.callBroadCast(mContext);
+                                        } else {
+                                            DebugUtil.showDebug(MainAct.currentMission, "GalleryAct, 이름 변경하는 부분", "현재 풀스캔 중");
+                                        }
 
                                         currentImageFileImage.setPath(fileNow.getPath());
                                         imagesInSameFolder.get(selectedPostion).setName(fileNow.getName());
@@ -512,11 +519,11 @@ public class GalleryAct extends ParentAct {
             return taskCnt;
         }
 
+
         @Override
         protected void onPostExecute(Integer result) {
             DebugUtil.showDebug("GalleryAct, MatchingAsyncTask, onPostExecute ");
-
-            if (matchingResultImages != null && matchingResultImages.size() >= 0) {
+            if (matchingResultImages != null && matchingResultImages.size() > 0) {
                 // refresh recycler view
                 DebugUtil.showDebug("GalleryAct, MatchingAsyncTask, " + matchingResultImages.size());
                 if (matchingImageRecyclerAdapter != null) {
@@ -526,15 +533,24 @@ public class GalleryAct extends ParentAct {
                     matchingImageRecyclerAdapter.notifyDataSetChanged();
 
                 }
+            } else {
+                recyclerView.setVisibility(View.GONE);
             }
+
 
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     galleryToolbar.animate().translationY(-galleryToolbar.getHeight()).setInterpolator(new AccelerateInterpolator(2)).setStartDelay(120);
-                    FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) recyclerView.getLayoutParams();
-                    int recyclerViewMargin = lp.bottomMargin;
-                    recyclerView.animate().translationY(recyclerView.getHeight() + recyclerViewMargin).setInterpolator(new AccelerateInterpolator(2)).start();
+
+                    if (!matchingResultImages.isEmpty()) {
+                        recyclerView.setVisibility(View.VISIBLE);
+                        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) recyclerView.getLayoutParams();
+                        int recyclerViewMargin = lp.bottomMargin;
+                        recyclerView.animate().translationY(recyclerView.getHeight() + recyclerViewMargin).setInterpolator(new AccelerateInterpolator(2)).start();
+                    } else {
+                        recyclerView.setVisibility(View.GONE);
+                    }
                 }
             }, 300);
 
@@ -813,8 +829,8 @@ public class GalleryAct extends ParentAct {
                     DebugUtil.showDebug("GalleryAct, before update DB _DATA::" + FileUtil.viewColumnInfoOfSpecificImageFile(this, currentImageFileImage.getId(), MediaStore.Images.Media.DATA));//업데이트 이전
                     ContentResolver mCr = getContentResolver();
                     ContentValues values = new ContentValues();
-                    values.put(MediaStore.Images.Media.DATA, destinationFolderPath+"/"+new File(currentImageFileImage.getPath()).getName());
-                    mCr.update(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values, MediaStore.Images.ImageColumns._ID +"=" + currentImageFileImage.getId(), null);
+                    values.put(MediaStore.Images.Media.DATA, destinationFolderPath + "/" + new File(currentImageFileImage.getPath()).getName());
+                    mCr.update(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values, MediaStore.Images.ImageColumns._ID + "=" + currentImageFileImage.getId(), null);
                     DebugUtil.showDebug("GalleryAct, after update DB _DATA::" + FileUtil.viewColumnInfoOfSpecificImageFile(this, currentImageFileImage.getId(), MediaStore.Images.Media.DATA));//업데이트 이후
 
                     new Handler().postDelayed(new Runnable() {
@@ -842,15 +858,18 @@ public class GalleryAct extends ParentAct {
                     MediaStore.Images.Media media = new MediaStore.Images.Media();
                     String imageName = new File(currentImageFileImage.getPath()).getName();
                     try {
-                        media.insertImage(mCr, destinationFolderPath+"/"+imageName, imageName, imageName);
+                        media.insertImage(mCr, destinationFolderPath + "/" + imageName, imageName, imageName);
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                         DebugUtil.showDebug(e.getMessage());
                     }
-//                    ContentValues values = new ContentValues();
-//                    values.put(MediaStore.Images.Media.DATA, destinationFolderPath+"/"+new File(currentImageFileImage.getPath()).getName());
-////                    mCr.insert() <- 이렇게 해야하나
-//                    mCr.update(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values, MediaStore.Images.ImageColumns._ID +"=" + currentImageFileImage.getId(), null);
+
+                    //업데이트
+                    File newFile = new File(destinationFolderPath + "/" + imageName);
+                    if(newFile.exists()){
+//                        new SingleMediaScanner(this, newFile);
+                        sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(newFile)));
+                    }
 
 
                     new Handler().postDelayed(new Runnable() {
@@ -868,7 +887,7 @@ public class GalleryAct extends ParentAct {
                     }, 1000);
                     DebugUtil.showDebug("GalleryAct, after inserted DB _DATA::" + FileUtil.viewIdOfSpecificImageFileUsingPath(this, destinationFolderPath + "/" + imageName, MediaStore.Images.Media._ID));//업데이트 이후
                 } else {
-                    DebugUtil.showToast(this, "현재 폴더에 복사 이름 자동으로 변경 작업 할 부분");
+                    DebugUtil.showDebug("GalleryAct, onActivityResult(), 복사할 파일 이름이 중복됨, 퀵픽과 같이 아무런 동작 안 함");
                 }
             }
         }

@@ -4,7 +4,6 @@ import android.app.Application;
 
 import com.example.dilab.sampledilabapplication.Sample.SampleResourceInitializer;
 
-import org.acra.ACRA;
 import org.acra.ReportingInteractionMode;
 import org.acra.annotation.ReportsCrashes;
 
@@ -46,7 +45,7 @@ public class IntelligentGallery extends Application {
         SampleResourceInitializer.initialize(getApplicationContext());
         DiLabClassifierUtil.init(getApplicationContext());
 
-        ACRA.init(this);
+//        ACRA.init(this);
         DebugUtil.showDebug("KorThaiDicApplication onCreate()");
     }
 

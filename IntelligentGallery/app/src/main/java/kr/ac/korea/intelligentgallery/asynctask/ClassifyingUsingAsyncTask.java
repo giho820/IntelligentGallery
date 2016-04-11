@@ -8,9 +8,11 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
 import kr.ac.korea.intelligentgallery.data.ImageFile;
+import kr.ac.korea.intelligentgallery.database.DatabaseCRUD;
 import kr.ac.korea.intelligentgallery.foursquare.Foursquare;
 import kr.ac.korea.intelligentgallery.util.DebugUtil;
 import kr.ac.korea.intelligentgallery.util.DiLabClassifierUtil;
@@ -54,8 +56,8 @@ public class ClassifyingUsingAsyncTask extends AsyncTask<Integer, String, Intege
             // 미디어 쿼리 사용해서 앨범 정보 가지고 오기
             mCr = mContext.getContentResolver();
             String[] projection = {MediaStore.Images.ImageColumns._ID, MediaStore.Images.ImageColumns.DATA};
-            String select = MediaStore.Images.ImageColumns.LATITUDE + " is not null and " +  MediaStore.Images.ImageColumns.LONGITUDE + " is not null and " +
-                    MediaStore.Images.ImageColumns.LATITUDE + " != 0 and " +  MediaStore.Images.ImageColumns.LONGITUDE + " != 0";
+            String select = MediaStore.Images.ImageColumns.LATITUDE + " is not null and " + MediaStore.Images.ImageColumns.LONGITUDE + " is not null and " +
+                    MediaStore.Images.ImageColumns.LATITUDE + " != 0 and " + MediaStore.Images.ImageColumns.LONGITUDE + " != 0";
 //            Cursor cursor = mCr.query(uri, projection, null, null, null);//test
             Cursor cursor = mCr.query(uri, projection, select, null, null);
 
@@ -97,6 +99,18 @@ public class ClassifyingUsingAsyncTask extends AsyncTask<Integer, String, Intege
             SharedPreUtil.getInstance().putPreference(SharedPreUtil.IS_NOT_FIRST_TIME_TO_START_APP, true);
         } else {//최초 실행이 아닐 때
             DebugUtil.showDebug("MakingContentDBService, ClassifyingUsingAsyncTask, ClassifyingUsingAsyncTask(), doInBackground, getBooleanPreference(SharedPreUtil.IS_NOT_FIRST_TIME_TO_START_APP) == true, 최초실행 아님");
+
+            ArrayList<Integer> dbImages = new ArrayList<>();
+            ArrayList<ImageFile> mediaImages = new ArrayList<>();
+            ArrayList<Integer> uselessDids = new ArrayList<>();
+            dbImages = DatabaseCRUD.getImagesIdsInInvertedIndexDb();
+            mediaImages = FileUtil.getImagesHavingGPSInfo(mContext);
+            int dbImageCnt = dbImages.size();
+            int mediaImageCnt = mediaImages.size();
+            if (dbImageCnt > mediaImageCnt) {
+                //외부에서 사진이 지워져서 필요없는 사진이 DB에 남아았다면 이를 제거하는 함수
+                DiLabClassifierUtil.deleteUselessDB(mContext);
+            }
         }
         //작업이 끝나고 작업된 개수를 리턴. onPostExecute()함수의 인수가 됨
         return taskCnt;

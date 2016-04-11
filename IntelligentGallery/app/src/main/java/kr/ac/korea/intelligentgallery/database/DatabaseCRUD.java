@@ -60,7 +60,7 @@ public class DatabaseCRUD {
         Integer result = null;
         cursor = DatabaseHelper.sqLiteDatabase.rawQuery("select " + DatabaseConstantUtil.COLUMN_DID + " from " +
                 DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME + " where " + DatabaseConstantUtil.COLUMN_CATEGORY_ID + " = " + cID + " and " +
-                DatabaseConstantUtil.COLUMN_RANK + " = 0 order by " + DatabaseConstantUtil.COLUMN_SCORE + " desc limit 1;", null);
+                DatabaseConstantUtil.COLUMN_RANK + " = 0 order by " + DatabaseConstantUtil.COLUMN_DID + " desc limit 1;", null);
 
         while (cursor != null && cursor.moveToNext()) {
             result = cursor.getInt(0);
@@ -126,7 +126,7 @@ public class DatabaseCRUD {
         cursor = DatabaseHelper.sqLiteDatabase.rawQuery("select distinct " + DatabaseConstantUtil.COLUMN_DID + " from " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
                 + " where " + DatabaseConstantUtil.COLUMN_RANK + "=0", null);
 
-        cursor.moveToFirst();
+//        cursor.moveToFirst();
         while (cursor != null && cursor.moveToNext()) {
 //            if (cursor.getCount() >0 && result.size() > cursor.getPosition())
             if (cursor.getCount() > 0)
@@ -236,7 +236,7 @@ public class DatabaseCRUD {
     public static ArrayList<ImageFile> getViewItemsWithSpecificCId(Integer clickedcId) {
         ArrayList<ImageFile> viewItemsWithSpecificCidImageFile = new ArrayList<>();
 
-        String selectQuery = "SELECT * FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME + " where " + DatabaseConstantUtil.COLUMN_RANK + "=0 and " + DatabaseConstantUtil.COLUMN_CATEGORY_ID + "=" + clickedcId + ";";
+        String selectQuery = "SELECT * FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME + " where " + DatabaseConstantUtil.COLUMN_RANK + "=0 and " + DatabaseConstantUtil.COLUMN_CATEGORY_ID + "=" + clickedcId + " order by " + DatabaseConstantUtil.COLUMN_DID + " desc ;";
 
         Cursor cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectQuery, null);
 

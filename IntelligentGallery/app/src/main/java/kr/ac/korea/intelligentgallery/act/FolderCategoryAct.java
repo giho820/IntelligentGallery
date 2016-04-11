@@ -64,13 +64,16 @@ public class FolderCategoryAct extends ParentAct implements View.OnClickListener
 
     ArrayList<ImageFile> imageFilesNotClassified = new ArrayList<>();
 
-    public static String imageOrderby = SharedPreUtil.getInstance().getSharedPrefs().getString(SharedPreUtil.FOLDER_CATEGORY_ORDER_BY, MediaStore.Images.Media.DATE_TAKEN);
+    public static String imageOrderby = SharedPreUtil.getInstance().getSharedPrefs().getString(SharedPreUtil.FOLDER_CATEGORY_ORDER_BY, MediaStore.Images.Media.DATE_TAKEN + " desc ");
 
     public final static String ttttt = "InsertingExternal";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_folder_category);
+
+        // set CommonLoadingDialog to show loading progressbar
+        setLoading(this);
 
         pathFromMainAct = getIntent().getStringExtra("album_path");
         DebugUtil.showDebug("FolderCategoryAct, pathFromMainAct:: " + pathFromMainAct);
@@ -90,7 +93,7 @@ public class FolderCategoryAct extends ParentAct implements View.OnClickListener
             }
             DebugUtil.showDebug(FolderCategoryAct.ttttt + "====================================");
 
-            getImagesInAlbum = new GetImagesInAlbum(FolderCategoryAct.this);
+            getImagesInAlbum = new GetImagesInAlbum(this);
         }
 
         //최상단의 툴바
@@ -326,10 +329,6 @@ public class FolderCategoryAct extends ParentAct implements View.OnClickListener
 //                categoryFragInAlbum.imageAdapter.addItems(updatedCategories);
 //                categoryFragInAlbum.setImagesInFolder(updatedImageFiles);
             }
-
-
-
-
         }
     }
 

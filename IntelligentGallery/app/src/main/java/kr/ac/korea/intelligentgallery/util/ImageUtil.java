@@ -367,7 +367,6 @@ public class ImageUtil {
         return result;
     }
 
-
     public static Bitmap scaleImage(Context context, Uri photoUri) throws IOException {
         InputStream is = context.getContentResolver().openInputStream(photoUri);
         BitmapFactory.Options dbo = new BitmapFactory.Options();
