@@ -7,9 +7,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -39,6 +41,7 @@ import kr.ac.korea.intelligentgallery.data.Album;
 import kr.ac.korea.intelligentgallery.data.ImageFile;
 import kr.ac.korea.intelligentgallery.database.DatabaseCRUD;
 import kr.ac.korea.intelligentgallery.database.DatabaseHelper;
+import kr.ac.korea.intelligentgallery.database.util.DatabaseConstantUtil;
 import kr.ac.korea.intelligentgallery.dialog.CommonDialog;
 import kr.ac.korea.intelligentgallery.dialog.FileDialog;
 import kr.ac.korea.intelligentgallery.intelligence.Sample.Model.ContentScoreData;
@@ -47,6 +50,7 @@ import kr.ac.korea.intelligentgallery.util.ConstantUtil;
 import kr.ac.korea.intelligentgallery.util.DebugUtil;
 import kr.ac.korea.intelligentgallery.util.DiLabClassifierUtil;
 import kr.ac.korea.intelligentgallery.util.FileUtil;
+import kr.ac.korea.intelligentgallery.util.MediaScanFile;
 import kr.ac.korea.intelligentgallery.util.MoveActUtil;
 import kr.ac.korea.intelligentgallery.util.SharedPreUtil;
 import kr.ac.korea.intelligentgallery.util.TextUtil;
@@ -93,6 +97,9 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
     // 방금 찍은 사진에 대한 처리
     public static String currentMission = "카메라 바로 나오기";
     public static Uri mImageCaptureUri = null;
+
+    private MediaScanFile mediaScanFile;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -147,11 +154,26 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
         registerReceiver(mBroadcastReceiver, intentFilter);
 
         //기타 사진이 아닌 파일들에 대한 적용
-//        FileUtil.updateMediaStorageQuery(this);
+        FileUtil.updateMediaStorageQuery(this);
         //사진은 적용이 된다
         if (!MediaScannerBroadcastReceiver.mMedaiScanning) {
             DebugUtil.showDebug(MainAct.currentMission, "mainAct, onResume()", "현재 풀스캔 중이지 않음, 풀스캔 시작");
             FileUtil.callBroadCast(this);
+            //Full Scan 강제 시작
+//            this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory()))); //킷캣 부터는 다른 코드를 써야한다 SecurityException: Permission Denial: not allowed to send broadcast android.intent.action.MEDIA_MOUNTED
+            DebugUtil.showDebug("MainAct, onActivityResult(), ACTION_MEDIA_MOUNTED, sendBroadcast 시작");
+
+            //kitkat 적용 테스트
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                Uri contentUri = Uri.parse("file://" + Environment.getExternalStorageDirectory()); //out is your output file
+                mediaScanIntent.setData(contentUri);
+                this.sendBroadcast(mediaScanIntent);
+            } else {
+                sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory())));
+            }
+
+
         } else {
             DebugUtil.showDebug(MainAct.currentMission, "mainAct, onResume()", "현재 풀스캔 중");
         }
@@ -217,10 +239,7 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
         tvFoldersNum.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!TextUtil.isNull(String.valueOf(mImageCaptureUri))) {
-                    DebugUtil.showDebug(currentMission, "MainAct, loadAlbum()", String.valueOf(mImageCaptureUri));
-                    DebugUtil.showDebug(currentMission, "MainAct, loadAlbum()", "uri's id? " + FileUtil.getImageIDUsingUri(MainAct.this, mImageCaptureUri));
-                }
+                DebugUtil.showDebug("gg, MainAct, loadAlbum(), CoverImage DB : " + DatabaseCRUD.selectCoverImageDBQuery());
             }
         });
         albumAdapter = new AlbumAdapter(this, this, albums);
@@ -729,38 +748,49 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                         CommonDialog renamingDialog = new CommonDialog();
                         renamingDialog.setDialogSettings(new CommonDialogListener() {
                             @Override
-                            public void onClickCommonDialog(DialogInterface dialog, int which, String newFolderName) {
+                            public void onClickCommonDialog(DialogInterface dialog, final int which, String newFolderName) {
                                 DebugUtil.showDebug("MainAct, onOptionsItemSelected(), case R.id.action_renaming : " + which);
                                 switch (which) {
                                     case CommonDialog.POSITIVE:
                                         String tag = "rename folder";
                                         DebugUtil.showDebug(tag + ":: 체크된 것의 이름은 " + albums.get(tempSelectedIndex).getName());
-                                        final File filePre = new File(albums.get(tempSelectedIndex).getPath());
-                                        final File fileNow = new File(filePre.getParentFile().getPath() + "/" + newFolderName);
+                                        final File folderPre = new File(albums.get(tempSelectedIndex).getPath());
+                                        final File folderNow = new File(folderPre.getParentFile().getPath() + "/" + newFolderName);
 
-                                        DebugUtil.showDebug(tag + ":: filePre " + filePre.getPath());
-                                        DebugUtil.showDebug(tag + ":: fileNow " + fileNow.getPath());
+                                        DebugUtil.showDebug(tag + ":: folderPre " + folderPre.getPath());
+                                        DebugUtil.showDebug(tag + ":: folderNow " + folderNow.getPath());
 
-                                        if (filePre.renameTo(fileNow)) {
-                                            DebugUtil.showToast(getApplicationContext(), "변경 성공 " + filePre.getName() + "->" + newFolderName);
-                                            DebugUtil.showDebug(filePre.getAbsolutePath());
+                                        if (folderPre.renameTo(folderNow)) {
+                                            DebugUtil.showToast(getApplicationContext(), "변경 성공 " + folderPre.getName() + "->" + newFolderName);
+                                            DebugUtil.showDebug(folderNow.getAbsolutePath());
 
-//                                            new Handler(Looper.getMainLooper()).post(new Runnable() {
-//                                                @Override
-//                                                public void run() {
+                                            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                                                @Override
+                                                public void run() {
                                             DebugUtil.showDebug("rename folder:: GalleryAct, before inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificAlbum(MainAct.this, albums.get(tempSelectedIndex).getId()));//업데이트 이전
-                                            FileUtil.updateAlbumName(MainAct.this, albums.get(tempSelectedIndex).getId(), fileNow.getPath());
+                                            DebugUtil.showDebug("folderPre :: " + folderPre.getName() +",, folderNow:: " + folderNow.getName());
+                                                    while(folderPre.getAbsolutePath().equals(folderNow.getAbsolutePath())){
+                                                        showLoading();
+                                                    }
+                                                    if(!folderPre.getAbsolutePath().equals(folderNow.getAbsolutePath())){
+                                                        FileUtil.updateAlbumName(MainAct.this, albums.get(tempSelectedIndex).getId(), folderNow.getName());
+                                                    }
                                             DebugUtil.showDebug("rename folder:: GalleryAct, after inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificAlbum(MainAct.this, albums.get(tempSelectedIndex).getId()));//업데이트 이후
-
+                                                }
+                                            });
 //                                            sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(filePre)));
+
+                                            albums.get(tempSelectedIndex).setName(newFolderName);
+                                            albums.get(tempSelectedIndex).setPath(folderNow.getAbsolutePath());
+                                            albumAdapter.setAlbums(albums);
+
                                             if (!MediaScannerBroadcastReceiver.mMedaiScanning) {
                                                 DebugUtil.showDebug(currentMission, "MainAct, 이름 변경하는 부분", "현재 풀스캔 중이지 않음");
                                                 FileUtil.callBroadCast(MainAct.this);
                                             } else {
                                                 DebugUtil.showDebug(currentMission, "MainAct, 이름 변경하는 부분", "현재 풀스캔 중");
                                             }
-//                                                }
-//                                            });
+
 
                                             onBackPressed();
                                             onResume();
@@ -787,23 +817,32 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                     for (int i = 0; i < albums.size(); i++) {
                         if (albums.get(i).isChecked()) {
                             checkedNum++;
-                            selectedIdx = i;
+                            selectedIdxInCoverSelect = i;
                         }
                     }
                     if (checkedNum == 0 || checkedNum > 1) {
                         DebugUtil.showToast(this, "커버 이미지를 변경할 폴더를 하나만 선택해주세요");
                         break;
                     } else if (checkedNum == 1) {
-                        DebugUtil.showDebug("coverImages path:::" + albums.get(selectedIdx).getCoverImagePath());
-                        int basicAlbumCoverId = FileUtil.getAlbumCoverImageIds(this, albums.get(selectedIdx));
+
+                        //기본을 선택했을 경우 커버 이미지 DB에서 해당 bucket_id가 있다면 지워주도록 한다
+                        //그렇게 하면 가장 최근에 찍힌 사진이 커버 이미지가 된다
+                        if(DatabaseCRUD.doesAlbumBucketIdExist(albums.get(selectedIdxInCoverSelect))){ //디비에 해당 앨범 버킷아이디가 있다면 delete
+                            String deleteQuery = "delete from " + DatabaseConstantUtil.TABLE_ALBUM_COVER + " where "
+                                    + DatabaseConstantUtil.COLUMN_ALBUM_BUCKET_ID +"="+ albums.get(selectedIdxInCoverSelect).getId() + ";";
+                            DatabaseCRUD.execRawQuery(deleteQuery);
+                            DebugUtil.showDebug("gg, MainAct, onActivityResult(), deleteQuery :: " + deleteQuery + " \ndelete 완료");
+                        }
+
+                        DebugUtil.showDebug("coverImages path:::" + albums.get(selectedIdxInCoverSelect).getCoverImagePath());
+                        int basicAlbumCoverId = FileUtil.getAlbumCoverImageIds(this, albums.get(selectedIdxInCoverSelect));
                         DebugUtil.showDebug("coverImages id ::" + basicAlbumCoverId);
                         String newfile = FileUtil.getImagePath(this, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + basicAlbumCoverId));
-                        albums.get(selectedIdx).setCoverImagePath(newfile);
+                        albums.get(selectedIdxInCoverSelect).setCoverImagePath(newfile);
                         albumAdapter.addItems(albums);
                         albumAdapter.notifyDataSetChanged();
-                        //유지하려면 미디어 디비에 앨범의 썸네일을 저장할 방법을 찾아야하나..66
-                        //혹은 뒤로가기 할때 onResume에서 앨범을 다시 불러오지 않게 해야할 라나.
-                        //아예 계속 유지되어야하는 값이니까..
+
+
                     }
                 }
                 break;
@@ -892,18 +931,29 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
 
 //                msc.connect();
 
-                //풀 스캔
-                if (!MediaScannerBroadcastReceiver.mMedaiScanning) {
-                    DebugUtil.showDebug(MainAct.currentMission, "MainAct, onActivityResult()", "현재 풀스캔 중이지 않음, 풀스캔 시작");
-                    FileUtil.callBroadCast(this);
-                } else {
-                    DebugUtil.showDebug(MainAct.currentMission, "MainAct, onActivityResult()", "현재 풀스캔 중, 개별 사진 스캔 시작");
-                    //개별 사진 스캔
-//                    String path = FileUtil.getRealPathFromURI(this, uri);
-//                    DebugUtil.showDebug("스캔하기", "MainAct, onActivityResult() FileUtil.getRealPathFromURI() 호출", "path::" + path);
-//                    File file = new File(path);
-//                    new SingleMediaScanner(this, file);
-                }
+//                //풀 스캔
+//                if (!MediaScannerBroadcastReceiver.mMedaiScanning) {
+//                    DebugUtil.showDebug(MainAct.currentMission, "MainAct, onActivityResult()", "현재 풀스캔 중이지 않음, 풀스캔 시작");
+//                    FileUtil.callBroadCast(this);
+//                } else {
+//                    DebugUtil.showDebug(MainAct.currentMission, "MainAct, onActivityResult()", "현재 풀스캔 중, 개별 사진 스캔 시작");
+//                    //개별 사진 스캔
+////                    String path = FileUtil.getRealPathFromURI(this, uri);
+////                    DebugUtil.showDebug("스캔하기", "MainAct, onActivityResult() FileUtil.getRealPathFromURI() 호출", "path::" + path);
+////                    File file = new File(path);
+////                    new SingleMediaScanner(this, file);
+//                }
+
+                //스캔 다시
+//                File f = new File("file://" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES));
+//                mediaScanFile = MediaScanFile.getInstance(this, f.getAbsolutePath());
+
+
+                //Full Scan 강제 시작
+//                this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://"+ Environment.getExternalStorageDirectory()))); //킷캣부터, Permission Denial: not allowed to send broadcast android.intent.action.MEDIA_MOUNTED
+                FileUtil.callBroadCast(this);
+                DebugUtil.showDebug("MainAct, onActivityResult(), ACTION_MEDIA_MOUNTED, sendBroadcast 시작");
+
 
                 if (albumAdapter != null) {
                     albumAdapter.notifyDataSetChanged();
@@ -915,13 +965,26 @@ public class MainAct extends ParentAct implements AdapterView.OnItemClickListene
                 int receivedId = data.getIntExtra("seletedCoverImageId", 0);
                 String receivedPath = data.getStringExtra("seletedCoverImagePath");
 
-                DebugUtil.showDebug("GALLERYACT_REQUESTCODE_FOR_SELECT_COVER_IMAGE:: received id??::" +receivedId +", " + receivedPath);
+                DebugUtil.showDebug("GALLERYACT_REQUESTCODE_FOR_SELECT_COVER_IMAGE:: received id??::" + receivedId + ", " + receivedPath);
 
                 albums.get(selectedIdxInCoverSelect).setCoverID(receivedId);
                 String newfile = FileUtil.getImagePath(this, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + receivedId));
                 albums.get(selectedIdxInCoverSelect).setCoverImagePath(newfile);
 
-                SharedPreUtil.getInstance().putPreference(SharedPreUtil.ALBUM_COVER_IMAGE_ID, receivedId);
+//                SharedPreUtil.getInstance().putPreference(SharedPreUtil.ALBUM_COVER_IMAGE_ID, receivedId);
+                if(DatabaseCRUD.doesAlbumBucketIdExist(albums.get(selectedIdxInCoverSelect))){ //디비에 해당 앨범 버킷아이디가 있다면 update
+                    String updateQuery = "update " + DatabaseConstantUtil.TABLE_ALBUM_COVER + " set " + DatabaseConstantUtil.COLUMN_ALBUM_COVER_IMAGE_ID + "=" + receivedId +" where "
+                            + DatabaseConstantUtil.COLUMN_ALBUM_BUCKET_ID +"="+ albums.get(selectedIdxInCoverSelect).getId() + ";";
+                    DatabaseCRUD.execRawQuery(updateQuery);
+                    DebugUtil.showDebug("MainAct, onActivityResult(), updateQuery :: " + updateQuery + " \nupdate 완료");
+                } else { //디비에 해당 앨범 버킷아이디가 없다면 insert
+                    String insertQuery = "insert or ignore into " + DatabaseConstantUtil.TABLE_ALBUM_COVER + " (" + DatabaseConstantUtil.COLUMN_AUTO_INCREMENT_KEY_TABLE_ALBUM_COVER+ ", " +
+                            DatabaseConstantUtil.COLUMN_ALBUM_BUCKET_ID+ ", " + DatabaseConstantUtil.COLUMN_ALBUM_COVER_IMAGE_ID +") values " +
+                            "(null, "+ albums.get(selectedIdxInCoverSelect).getId() +", "+ receivedId +");";
+                    DatabaseCRUD.execRawQuery(insertQuery);
+                    DebugUtil.showDebug("MainAct, onActivityResult(), insertQuery :: " + insertQuery + " \ninsert 완료");
+                }
+
 
                 albumAdapter.addItems(albums);
                 albumAdapter.notifyDataSetChanged();

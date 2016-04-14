@@ -41,14 +41,15 @@
                 android:title="@string/action_arranging_orderby_data" />
         </menu>
     </item>
-    <item
-        android:id="@+id/action_concealing"
-        android:orderInCategory="100"
-        android:title="@string/action_concealing"
-        app:showAsAction="never" />
+
     <item
         android:id="@+id/action_renaming"
         android:orderInCategory="100"
         android:title="@string/action_renaming"
         app:showAsAction="never" />
 </menu>
+<!--<item-->
+<!--android:id="@+id/action_concealing"-->
+<!--android:orderInCategory="100"-->
+<!--android:title="@string/action_concealing"-->
+<!--app:showAsAction="never" />-->

@@ -45,6 +45,14 @@ public class CategoryFragImageAdapter extends BaseAdapter {
             ImageLoader.getInstance().init(ImageUtil.intelligentGalleryGlobalImageLoaderConfiguration(context));
     }
 
+    public void addItems(ArrayList<ImageFile> items) {
+        if (this.items == null)
+            this.items = new ArrayList<>();
+        this.items.removeAll(this.items);
+        this.items.addAll(items);
+        notifyDataSetChanged();
+    }
+
     public void setItems(ArrayList<ImageFile> items) {
         DebugUtil.showDebug("setItems() in imageAdapter");
         this.items = items;
@@ -155,7 +163,7 @@ public class CategoryFragImageAdapter extends BaseAdapter {
 
                 //FolderCategory 액티비티의 메뉴를 변경해야한다
                 CategoryFrag.categoryAct.toolbar.getMenu().clear();
-                CategoryFrag.categoryAct.toolbar.inflateMenu(R.menu.menu_folder_long_clicked);
+                CategoryFrag.categoryAct.toolbar.inflateMenu(R.menu.menu_category_long_clicked);
 
 //                //FolderCategory 액티비티의 메뉴를 변경해야한다
 //                if(FolderFrag.folderCategoryAct.toolbar != null) {

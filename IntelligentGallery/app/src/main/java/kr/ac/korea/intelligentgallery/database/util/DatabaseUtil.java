@@ -30,7 +30,7 @@ public class DatabaseUtil {
 
         return checkDatabase != null ? true : false;
     }
-    //안 쓰는 것
+
     public static void copyDataBase(Context context) throws IOException {
         DebugUtil.showDebug("copyDataBase");
 

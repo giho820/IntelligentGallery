@@ -1,7 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="kr.ac.korea.intelligentgallery.act.FolderCategoryAct"
+    tools:context="kr.ac.korea.intelligentgallery.act.CategoryAct"
     >
 
     <item
@@ -18,15 +18,16 @@
         android:icon="@drawable/ic_menu_select_mode"
         app:showAsAction="always" />
 
-    <item
-        android:id="@+id/action_arranging_floder_category"
-        android:orderInCategory="100"
-        android:title="@string/action_arranging"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/action_concealing"
-        android:orderInCategory="100"
-        android:title="@string/action_concealing"
-        app:showAsAction="never" />
+
 
 </menu>
+<!--<item-->
+<!--android:id="@+id/action_arranging_floder_category"-->
+<!--android:orderInCategory="100"-->
+<!--android:title="@string/action_arranging"-->
+<!--app:showAsAction="never" />-->
+<!--<item-->
+<!--android:id="@+id/action_concealing"-->
+<!--android:orderInCategory="100"-->
+<!--android:title="@string/action_concealing"-->
+<!--app:showAsAction="never" />-->

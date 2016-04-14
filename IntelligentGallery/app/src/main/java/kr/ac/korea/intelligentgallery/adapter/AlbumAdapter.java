@@ -3,6 +3,8 @@ package kr.ac.korea.intelligentgallery.adapter;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +24,9 @@ import kr.ac.korea.intelligentgallery.R;
 import kr.ac.korea.intelligentgallery.act.FolderCategoryAct;
 import kr.ac.korea.intelligentgallery.act.MainAct;
 import kr.ac.korea.intelligentgallery.data.Album;
+import kr.ac.korea.intelligentgallery.database.DatabaseCRUD;
 import kr.ac.korea.intelligentgallery.util.DebugUtil;
+import kr.ac.korea.intelligentgallery.util.FileUtil;
 import kr.ac.korea.intelligentgallery.util.ImageUtil;
 import kr.ac.korea.intelligentgallery.util.MoveActUtil;
 import kr.ac.korea.intelligentgallery.util.TextUtil;
@@ -122,10 +126,20 @@ public class AlbumAdapter extends BaseAdapter {
             viewHolder.file_count.setText("" + album.count);
         }
 
-        //폴더의 썸네일 표시
-//        ImageLoader.getInstance().displayImage("file://" + "/storage/emulated/0/capture1455691736543.png", viewHolder.folderThumbnail); //이건 되고
 
+        //폴더의 썸네일 표시
         String albumCoverImagePath = album.getCoverImagePath();
+
+        //사용자가 선택한 표지 이미지가 있으면 적용할 것
+        Integer userSelectedCoverImageId = DatabaseCRUD.getCoverImageIDOfSpecificAlbum(album);
+        String userSelectedCoverImagePath = FileUtil.getImagePath(mContext, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + userSelectedCoverImageId));
+        if(!TextUtil.isNull(userSelectedCoverImagePath)) {
+//            DebugUtil.showDebug("AlbumAdapter, 해당 앨범에는 대표 이미지가 있음 :: " + userSelectedCoverImagePath);
+            albumCoverImagePath = userSelectedCoverImagePath; //이 이미지로 적용
+        } else {
+//            DebugUtil.showDebug("AlbumAdapter, 해당 앨범에는 대표 이미지가 없음" + userSelectedCoverImagePath);
+        }
+
         if(ImageLoader.getInstance().getDiskCache().get("file://"+albumCoverImagePath) != null){
             ImageLoader.getInstance().displayImage("file://" + albumCoverImagePath, viewHolder.folderThumbnail);
         } else {

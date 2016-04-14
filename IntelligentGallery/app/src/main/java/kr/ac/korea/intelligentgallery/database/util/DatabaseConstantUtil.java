@@ -16,11 +16,11 @@ public class DatabaseConstantUtil {
     public static final String COLUMN_RANK = "RANK";
     public static final String COLUMN_SCORE = "SCORE";
 
-    //컨텐츠 앨범 테이블
-    public static final String TABLE_INTELLIGENT_GALLERY_CONTENT_ALBUM_NAME = "intelligent_gallery_content_album_table";
-    public static final String COLUMN_AUTO_INCREMENT_KEY_CONTENT_ALBUM = "idx";
-    public static final String COLUMN_ALBUM_ID = "id";
-    public static final String COLUMN_ALBUM_CONTENTS_COUNT = "count";
+    //앨범 커비 이미지 저장하는 테이블
+    public static final String TABLE_ALBUM_COVER = "TABLE_ALBUM_COVER";
+    public static final String COLUMN_AUTO_INCREMENT_KEY_TABLE_ALBUM_COVER = "idx";
+    public static final String COLUMN_ALBUM_BUCKET_ID = "album_id";
+    public static final String COLUMN_ALBUM_COVER_IMAGE_ID = "image_data_id";
 
     //컨텐츠가 담긴 테이블, id, path, longitude, latitude, album_id
 
@@ -33,13 +33,14 @@ public class DatabaseConstantUtil {
             "unique (" +DatabaseConstantUtil.COLUMN_DID +", "+ DatabaseConstantUtil.COLUMN_RANK + ")" +
             ");";
 
-    public static final String CREATE_INTELLIGENT_GALLERY_CONTENT_ALBUM_TABLE = "create table " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_CONTENT_ALBUM_NAME + "(" +
-            DatabaseConstantUtil.COLUMN_AUTO_INCREMENT_KEY_CONTENT_ALBUM + " integer primary key autoincrement Not null UNIQUE, " +
-            DatabaseConstantUtil.COLUMN_ALBUM_ID + " text Not null, " +
-            DatabaseConstantUtil.COLUMN_ALBUM_CONTENTS_COUNT + " Integer Not null" +
+    public static final String CREATE_INTELLIGENT_GALLERY_ALBUM_COVER_TABLE = "create table " + DatabaseConstantUtil.TABLE_ALBUM_COVER + " (" +
+            DatabaseConstantUtil.COLUMN_AUTO_INCREMENT_KEY_TABLE_ALBUM_COVER + " integer primary key autoincrement Not null UNIQUE, " +
+            DatabaseConstantUtil.COLUMN_ALBUM_BUCKET_ID + " text Not null, " +
+            DatabaseConstantUtil.COLUMN_ALBUM_COVER_IMAGE_ID + " Integer Not null, " +
+            "unique (" +DatabaseConstantUtil.COLUMN_AUTO_INCREMENT_KEY_TABLE_ALBUM_COVER +", "+ DatabaseConstantUtil.COLUMN_ALBUM_BUCKET_ID + ")" +
             ");";
 
-    public static int DATABASE_VERSION = 4;
+    public static int DATABASE_VERSION = 5;
 
 
 }

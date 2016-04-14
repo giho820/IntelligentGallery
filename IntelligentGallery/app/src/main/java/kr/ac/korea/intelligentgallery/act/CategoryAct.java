@@ -47,7 +47,7 @@ public class CategoryAct extends ParentAct implements View.OnClickListener {
 
         if (cIdFromMainAct >= 0) {
 
-            DebugUtil.showDebug("FolderCategoryAct, onCreate(), received cid : " + cIdFromMainAct);
+            DebugUtil.showDebug("CategoryAct, onCreate(), received cid : " + cIdFromMainAct);
 
             //최상단의 툴바
             toolbar = (Toolbar) findViewById(R.id.toolbar_folder_category);
@@ -68,7 +68,7 @@ public class CategoryAct extends ParentAct implements View.OnClickListener {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        DebugUtil.showDebug("FolderCategoryAct, onCreateOptionsMenu() : ");
+        DebugUtil.showDebug("CategoryAct, onCreateOptionsMenu() : ");
         MenuInflater inflater = getMenuInflater();
 
         toolbar.getMenu().clear();
@@ -144,7 +144,7 @@ public class CategoryAct extends ParentAct implements View.OnClickListener {
      */
     @Override
     public void onClick(View v) {
-        DebugUtil.showDebug("FolderCategoryFrag, onClick(), v.getId() :" + v.getId());
+        DebugUtil.showDebug("CategoryFrag, onClick(), v.getId() :" + v.getId());
         switch (v.getId()) {
             case R.drawable.ic_backkey:
                 onBackPressed();

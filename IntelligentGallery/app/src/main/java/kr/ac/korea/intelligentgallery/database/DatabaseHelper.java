@@ -46,7 +46,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             DebugUtil.showDebug("Database is existed");
         }
 
-
         db.beginTransaction();
         try {
             db.execSQL(DatabaseConstantUtil.CREATE_INTELLIGENT_GALLERY_TABLE);
@@ -58,7 +57,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         db.endTransaction();
 
+        db.beginTransaction();
+        try {
+            db.execSQL(DatabaseConstantUtil.CREATE_INTELLIGENT_GALLERY_ALBUM_COVER_TABLE);
+            DebugUtil.showDebug(DatabaseConstantUtil.CREATE_INTELLIGENT_GALLERY_ALBUM_COVER_TABLE);
+            db.setTransactionSuccessful();
 
+        } catch (Exception err) {
+            DebugUtil.showDebug(err.toString());
+        }
+        db.endTransaction();
 
     }
 
@@ -66,6 +74,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         DebugUtil.showDebug("DatabaseHelper onUpgrade()");
         db.execSQL("DROP TABLE IF EXISTS " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + DatabaseConstantUtil.TABLE_ALBUM_COVER);
 
         onCreate(db);
 

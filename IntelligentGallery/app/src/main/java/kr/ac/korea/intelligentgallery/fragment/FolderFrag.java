@@ -7,8 +7,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -237,10 +235,10 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
                 imageAdapter.addItems(updatedImageFiles);
                 return true;
 
-            //숨기기
-            case R.id.action_concealing:
-                DebugUtil.showToast(folderCategoryAct, "숨기기");
-                return true;
+//            //숨기기
+//            case R.id.action_concealing:
+//                DebugUtil.showToast(folderCategoryAct, "숨기기");
+//                return true;
 
             case R.id.action_renaming:
                 DebugUtil.showDebug("이름 변경하기");
@@ -264,11 +262,14 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
                                     DebugUtil.showToast(folderCategoryAct, "변경 성공 " + filePre.getName() + "->" + newFolderName);
                                     DebugUtil.showDebug(filePre.getAbsolutePath());
 
-                                    DebugUtil.showDebug("rename folder:: GalleryAct, before inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificAlbum(folderCategoryAct, album.getId()));//업데이트 이전
-                                    FileUtil.updateAlbumName(folderCategoryAct, album.getId(), fileNow.getPath());
-                                    DebugUtil.showDebug("rename folder:: GalleryAct, after inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificAlbum(folderCategoryAct, album.getId()));//업데이트 이후
+                                    DebugUtil.showDebug("rename folder:: FolderFrag, before inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificAlbum(folderCategoryAct, album.getId()));//업데이트 이전
+                                    FileUtil.updateAlbumName(folderCategoryAct, album.getId(), fileNow.getName());
+                                    DebugUtil.showDebug("rename folder:: FolderFrag, after inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificAlbum(folderCategoryAct, album.getId()));//업데이트 이후
 
-                                    folderCategoryAct.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(filePre)));
+//                                    folderCategoryAct.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(filePre)));
+
+                                    FileUtil.callBroadCast(folderCategoryAct);
+                                    DebugUtil.showDebug("FolderFrag, case R.id.action_renaming:, sendBroadcast 시작");
 
                                     imageAdapter.addItems(FileUtil.getImages(folderCategoryAct, album));
                                     imageAdapter.notifyDataSetChanged();
@@ -371,145 +372,21 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
 
                 return true;
 
+            //회전하기
+            case R.id.action_rotation_left90:
+            rotateFolderFragImages(270);
 
-//            case R.id.action_rotation:
-//                return true;
-//
-//            case R.id.action_rotation_left90:
-//                DebugUtil.showToast(folderCategoryAct, "왼쪽 90도 회전하기");
-//                if (imagesInFolder != null && imagesInFolder.size() > 0) {
-//                    for (int i = 0; i < imagesInFolder.size(); i++) {
-//                        if (selectedPositionsList.contains(i)) {
-//                            final String path = imageAdapter.getItem(i).getPath();
-//                            DebugUtil.showDebug("i : " + i + ", path: " + path);
-//                            Bitmap bitmap = BitmapFactory.decodeFile(imageAdapter.getItem(i).getPath());
-//                            ImageUtil.SaveBitmapToFileCache(ImageUtil.GetRotatedBitmap(bitmap, 270), imageAdapter.getItem(i).getPath());
-//
-//                            new Handler().postDelayed(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    DebugUtil.showDebug("회전 완료");
-//                                    //해결 중인 방안
-//////                                    imageAdapter.setItems(imagesInFolder);
-////                                    imageAdapter.onUiRefresh();
-//                                    imageAdapter.notifyDataSetChanged();
-//                                }
-//                            }, 1000);
-//
-////                            getActivity().runOnUiThread(new Runnable() {
-////                                @Override
-////                                public void run() {
-////                                    imageAdapter.onUiRefresh();
-////                                }
-////                            });
-//
-////                            imageAdapter.setItems(imagesInFolder);
-//                        }
-//                    }
-//                }
-//                return true;
-//
-//            case R.id.action_rotation_right90:
-//                DebugUtil.showToast(folderCategoryAct, "오른쪽 90도 회전하기");
-//                if (imagesInFolder != null && imagesInFolder.size() > 0) {
-//                    for (int i = 0; i < imagesInFolder.size(); i++) {
-//                        if (selectedPositionsList.contains(i)) {
-//                            final String path = imageAdapter.getItem(i).getPath();
-//                            DebugUtil.showDebug("i : " + i + ", path: " + path);
-//                            Bitmap bitmap = BitmapFactory.decodeFile(imageAdapter.getItem(i).getPath());
-//                            ImageUtil.SaveBitmapToFileCache(ImageUtil.GetRotatedBitmap(bitmap, 90), imageAdapter.getItem(i).getParentPath() + "/" + FileUtil.getFileNameFromPath(path));
-//
-//                            new Handler().postDelayed(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    DebugUtil.showDebug("회전 완료");
-//                                    //임시방안
-//                                    imageAdapter = new FolderFragImageAdapter(folderCategoryAct, imagesInFolder);
-//                                    gridViewFolderFrag.setAdapter(imageAdapter);
-//                                    //해결 중인 방안
-//////                                    imageAdapter.setItems(imagesInFolder);
-////                                    imageAdapter.onUiRefresh();
-////                                    imageAdapter.notifyDataSetChanged();
-//                                }
-//                            }, 1000);
-//
-////                            getActivity().runOnUiThread(new Runnable() {
-////                                @Override
-////                                public void run() {
-////                                    imageAdapter.onUiRefresh();
-////                                }
-////                            });
-//
-////                            imageAdapter.setItems(imagesInFolder);
-//                        }
-//                    }
-//                }
-//                return true;
-//
-//
-            case R.id.action_rotation_180:
-//                Uri currentImageFileUri = Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + imagesInFolder.get(FolderFrag.selectedPositionsList.get(0)));
-//                int currentOrientation = ExifUtil.getOrientation(folderCategoryAct, currentImageFileUri);
-
-//                DebugUtil.showDebug("FolderFrag, onOptionsItemSelected(), currentImageFileUri :: " + currentImageFileUri);
-//                DebugUtil.showDebug("FolderFrag, onOptionsItemSelected(), currentOrientation :: " + currentOrientation);
-
-                ArrayList<Integer> sortedSelectedPositionsInRotate180 = new ArrayList<>();
-                sortedSelectedPositionsInRotate180.addAll(FolderFrag.selectedPositions);
-                Collections.sort(sortedSelectedPositionsInRotate180);
-                FolderFrag.selectedPositionsList = sortedSelectedPositionsInRotate180;
-
-                DebugUtil.showToast(folderCategoryAct, "180도 회전하기  imagesInFolder.size() 뭐니?" + imagesInFolder.size());
-
-                if (imagesInFolder != null && imagesInFolder.size() > 0) {
-                    for (int i = 0; i < imagesInFolder.size(); i++) {
-                        if (selectedPositionsList.contains(i)) {
-                            final String path = imageAdapter.getItem(i).getPath();
-                            DebugUtil.showDebug("i : " + i + ", path: " + path);
-                            Bitmap bitmap = BitmapFactory.decodeFile(imageAdapter.getItem(i).getPath());
-                            ImageUtil.SaveBitmapToFileCache(ImageUtil.GetRotatedBitmap(bitmap, 180), imageAdapter.getItem(i).getParentPath() + "/" + FileUtil.getFileNameFromPath(path));
-
-                            final int finalI = i;
-                            new Handler().postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    DebugUtil.showDebug("회전 완료");
-                                    //임시방안
-//                                    imageAdapter = new FolderFragImageAdapter(folderCategoryAct, imagesInFolder);
-                                    Uri currentImageFileUri = Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + imagesInFolder.get(finalI).getId());
-                                    int currentOrientation = ExifUtil.getOrientation(folderCategoryAct, currentImageFileUri);
-                                    DebugUtil.showDebug("GalleryAct, before inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificImageFile(folderCategoryAct, imagesInFolder.get(finalI).getId(), MediaStore.Images.Media.ORIENTATION));//업데이트 이전
-                                    DebugUtil.showDebug("before rotated, rotated orientation ::" + currentOrientation);
-                                    DebugUtil.showDebug("180도 회전시키기");
-                                    DebugUtil.showDebug("==========================================================");
-                                    ExifUtil.setOrientation(currentImageFileUri, imagesInFolder.get(finalI).getPath(), currentOrientation + 180, folderCategoryAct);
-                                    DebugUtil.showDebug("GalleryAct, after inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificImageFile(folderCategoryAct, imagesInFolder.get(finalI).getId(), MediaStore.Images.Media.ORIENTATION));//업데이트 이후
-                                    DebugUtil.showDebug("after rotated, rotated orientation ::" + ExifUtil.getOrientation(folderCategoryAct, currentImageFileUri));
-
-                                    imageAdapter.setItems(imagesInFolder);
-                                    imageAdapter.notifyDataSetChanged();
-//                                    gridViewFolderFrag.setAdapter(imageAdapter);
-                                    //해결 중인 방안
-////                                    imageAdapter.setItems(imagesInFolder);
-//                                    imageAdapter.onUiRefresh();
-//                                    imageAdapter.notifyDataSetChanged();
-                                }
-                            }, 300);
-
-//                            getActivity().runOnUiThread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    imageAdapter.onUiRefresh();
-//                                }
-//                            });
-
-//                            imageAdapter.setItems(imagesInFolder);
-                        }
-                    }
-                }
                 return true;
 
-//이동하기
+            case R.id.action_rotation_right90:
+                rotateFolderFragImages(90);
+                return true;
+
+            case R.id.action_rotation_180:
+                rotateFolderFragImages(180);
+                return true;
+
+            //이동하기
             case R.id.action_moving:
                 if (imagesInFolder != null) {
                     Intent intent = new Intent(folderCategoryAct, MoveAct.class);
@@ -561,6 +438,41 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
         }
 
         return false;
+    }
+
+    private void rotateFolderFragImages(final int rotateDegree) {
+        ArrayList<Integer> sortedSelectedPositionsInRotate = new ArrayList<>();
+        sortedSelectedPositionsInRotate.addAll(FolderFrag.selectedPositions);
+        Collections.sort(sortedSelectedPositionsInRotate);
+        FolderFrag.selectedPositionsList = sortedSelectedPositionsInRotate;
+
+        if (imagesInFolder != null && imagesInFolder.size() > 0) {
+            for (int i = 0; i < imagesInFolder.size(); i++) {
+                if (selectedPositionsList.contains(i)) {
+
+                    final int finalI = i;
+                    final Uri currentImageFileUri = Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + imagesInFolder.get(finalI).getId());
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            int currentOrientation = ExifUtil.getOrientation(folderCategoryAct, currentImageFileUri);
+                            DebugUtil.showDebug(rotateDegree + "도 회전시키기 : 현재 orientation :: " + currentOrientation);
+                            DebugUtil.showDebug(rotateDegree + "도 회전시키기 업데이트 이전 GalleryAct, before inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificImageFile(folderCategoryAct, imagesInFolder.get(finalI).getId(), MediaStore.Images.Media.ORIENTATION));//업데이트 이전
+                            DebugUtil.showDebug(rotateDegree + "도 회전시키기 변경함 ");
+                            DebugUtil.showDebug("==========================================================");
+                            ExifUtil.setOrientation(currentImageFileUri, imagesInFolder.get(finalI).getPath(), currentOrientation + rotateDegree, folderCategoryAct);
+                        }
+                    }, 300);
+                    DebugUtil.showDebug(rotateDegree + "도 회전시키기 업데이트 이후 GalleryAct, after inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificImageFile(folderCategoryAct, imagesInFolder.get(finalI).getId(), MediaStore.Images.Media.ORIENTATION));//업데이트 이후
+                    DebugUtil.showDebug("after rotated, rotated orientation ::" + ExifUtil.getOrientation(folderCategoryAct, currentImageFileUri));
+
+                    imageAdapter.setItems(imagesInFolder);
+                    imageAdapter.notifyDataSetChanged();
+                    onBackPressed();
+                }
+            }
+        }
+
     }
 
 
@@ -669,8 +581,7 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
                             });
                         }
                     }, 1500);
-                }
-                else {
+                } else {
                     DebugUtil.showDebug("GalleryAct, onActivityResult(), 복사할 파일 이름이 중복됨, 퀵픽과 같이 아무런 동작 안 함");
                 }
             }

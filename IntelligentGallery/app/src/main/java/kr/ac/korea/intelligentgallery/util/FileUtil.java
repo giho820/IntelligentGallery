@@ -6,6 +6,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -798,7 +799,7 @@ public class FileUtil {
             else {
                 return null;
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             e.getStackTrace();
             e.getMessage();
             DebugUtil.showDebug("FileUtil, getFileNameFromPath(), exception 발생");
@@ -1038,31 +1039,33 @@ public class FileUtil {
     }
 
     //미디어 스토어 풀스캔하는 함수
-    //cf. 개별 파일 스캔은 util -> SingleMediaScanner.java
+    //cf. 개별 파일 스캔은 util -> MediaScanFile.java
     public static void callBroadCast(Context context) {
         if (context == null) {
             DebugUtil.showDebug("FileUtil, callBroadCast is null");
             return;
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            DebugUtil.showDebug("킷캣 이상 버젼, not allowed to send broadcast android.intent.action.MEDIA_MOUNTED");
             Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
             File f = new File("file://" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES));
             Uri contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
             mediaScanIntent.setData(contentUri);
             context.sendBroadcast(mediaScanIntent);
-//        }
-//        else if (Build.VERSION.SDK_INT >= 14) {
-//            Log.e("-->", " >= 14");
-//            MediaScannerConnection.scanFile(context, new String[]{Environment.getExternalStorageDirectory().toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
-//                public void onScanCompleted(String path, Uri uri) {
-//                    Log.e("ExternalStorage", "Scanned " + path + ":");
-//                    Log.e("ExternalStorage", "-> uri=" + uri);
-//                }
-//            });
-        } else {
-            Log.e("-->", " < 14");
+
+        } else if (Build.VERSION.SDK_INT >= 14) {
+            Log.e("-->", " >= 14, 아이스크림 샌드위치 이상 ");
             context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory())));
 
+            MediaScannerConnection.scanFile(context, new String[]{Environment.getExternalStorageDirectory().toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
+                public void onScanCompleted(String path, Uri uri) {
+                    Log.e("ExternalStorage", "Scanned " + path + ":");
+                    Log.e("ExternalStorage", "-> uri=" + uri);
+                }
+            });
+        } else {
+            Log.e("-->", " < 14, 아이스크림 샌드위치 미만");
+            context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory())));
         }
     }
 
@@ -1112,8 +1115,7 @@ public class FileUtil {
         Cursor c = mCr.query(uri, projection, null, null, null);
         while (c != null && c.moveToNext()) {
             String data = c.getString(c.getColumnIndexOrThrow(projection[0])).toString();
-//            DebugUtil.showDebug("FileUtil, viewColumnInfoOfSpecificImageFile(), image :: " + id + "'s path :: " + data);
-            result = "FileUtil, viewColumnInfoOfSpecificImageFile(), image :: " + id + "'s path :: " + data;
+            result = "FileUtil, viewColumnInfoOfSpecificImageFile(), image :: " + id + "'s result :: " + data;
         }
         return result;
     }
@@ -1148,10 +1150,11 @@ public class FileUtil {
             String data = c.getString(c.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
             result += "rename folder::FileUtil, viewColumnInfoOfSpecificAlbum(), buckedId :: " + buckedId + "'s data :: " + data + "\n";
         }
+        c.close();
         return result;
     }
 
-    public static String updateAlbumName(Context context, String buckedId, String newFilePath) {
+    public static String updateAlbumName(Context context, String buckedId, String folderName) {
 
 
         String result = "";
@@ -1163,17 +1166,15 @@ public class FileUtil {
 
         while (c != null && c.moveToNext()) {
             Integer did = c.getInt(c.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
-            String titie = c.getString(c.getColumnIndex(MediaStore.Images.Media.TITLE));
             String path = c.getString(c.getColumnIndex(MediaStore.Images.Media.DATA));
+            DebugUtil.showDebug("currentFile :: 바뀌기 전인가 후인가? " + path);
             File file = new File(path);
-            if (file.exists()) {
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.Images.Media.DATA, newFilePath + "/" + file);
-                DebugUtil.showDebug("rename folder::" + values.toString());
-                mCr.update(Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + did), values, null, null);
-            }
-
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.DATA, file.getParentFile().getParentFile().getAbsolutePath() + "/" + folderName +"/" + file.getName());
+            DebugUtil.showDebug("renamed folder :: " + file.getParentFile().getParentFile().getAbsolutePath() + "/" + folderName + "/" + file.getName());
+            mCr.update(Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + did), values, null, null);
         }
+        c.close();
         return result;
     }
 

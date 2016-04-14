@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
 import kr.ac.korea.intelligentgallery.act.GalleryAct;
+import kr.ac.korea.intelligentgallery.data.Album;
 import kr.ac.korea.intelligentgallery.data.Category;
 import kr.ac.korea.intelligentgallery.data.ImageFile;
 import kr.ac.korea.intelligentgallery.database.util.DatabaseConstantUtil;
@@ -120,6 +121,38 @@ public class DatabaseCRUD {
         return result;
     }
 
+    public static String selectCoverImageDBQuery() {
+        String result = "";
+
+        cursor = DatabaseHelper.sqLiteDatabase.rawQuery("select * from " + DatabaseConstantUtil.TABLE_ALBUM_COVER, null);
+
+        while (cursor != null && cursor.moveToNext()) {
+            result += cursor.getInt(0)
+                    + ". "
+                    + cursor.getString(1)
+                    + " | "
+                    + cursor.getInt(2)
+                    + "\n";
+        }
+
+        cursor.close();
+        return result;
+    }
+
+    public static boolean doesAlbumBucketIdExist(Album album) {
+        boolean isExist;
+        cursor = DatabaseHelper.sqLiteDatabase.rawQuery("select "+ DatabaseConstantUtil.COLUMN_ALBUM_BUCKET_ID+" from " + DatabaseConstantUtil.TABLE_ALBUM_COVER + " where "
+                + DatabaseConstantUtil.COLUMN_ALBUM_BUCKET_ID + " = " + album.getId() +";", null);
+        DebugUtil.showDebug("gg 들어온 앨범 아이디 :: " + album.getId() +"cursor.getcount :: " + cursor.getCount());
+        if(cursor.getCount() == 1)
+            isExist = true;
+        else
+            isExist = false;
+        cursor.close();
+        return isExist;
+    }
+
+
     public static ArrayList<Integer> getImagesIdsInInvertedIndexDb() {
         ArrayList<Integer> result = new ArrayList<>();
 
@@ -136,6 +169,25 @@ public class DatabaseCRUD {
         cursor.close();
 
         return result;
+    }
+
+    public static Integer getCoverImageIDOfSpecificAlbum(Album album) {
+        Integer coverImageId = 0;
+
+        String selectQuery = "select " + DatabaseConstantUtil.COLUMN_ALBUM_COVER_IMAGE_ID + " from " + DatabaseConstantUtil.TABLE_ALBUM_COVER + " where " +
+                DatabaseConstantUtil.COLUMN_ALBUM_BUCKET_ID + "=" + album.getId() + ";";
+//        DebugUtil.showDebug("FileUtil, getAlbums(), selectQuery :: " + selectQuery);
+
+        cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectQuery, null);
+
+        while (cursor != null && cursor.moveToNext()) {
+            if (cursor.getCount() > 0){
+                coverImageId = cursor.getInt(0);
+//                DebugUtil.showDebug("DatabaseCRUD, getCoverImagePathOfSpecificAlbum :: coverImageID :: " + coverImageId);
+            }
+        }
+        cursor.close();
+        return coverImageId;
     }
 
     public static ArrayList<Integer> dIDsInsideCategoryFragInAlbumUsingCId(Integer cID) {
@@ -317,12 +369,12 @@ public class DatabaseCRUD {
         ArrayList<SampleScoreData> scoreDatas = new ArrayList<>();
         String selectSql = "select * from " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
                 + " where " + DatabaseConstantUtil.COLUMN_DID + "=" + currentImageFileImageId
-                + " and " + DatabaseConstantUtil.COLUMN_RANK +" != 0";
+                + " and " + DatabaseConstantUtil.COLUMN_RANK + " != 0";
 
         cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
 
-        if(cursor.getCount() == 0l) {
-            DebugUtil.showDebug(GalleryAct.correctTopk +" DatabaseCRUD, getScoreDatasUsingDidThatSizeIsK, 이건 db에 없어서 쿼리 결과 없음");
+        if (cursor.getCount() == 0l) {
+            DebugUtil.showDebug(GalleryAct.correctTopk + " DatabaseCRUD, getScoreDatasUsingDidThatSizeIsK, 이건 db에 없어서 쿼리 결과 없음");
         }
         while (cursor != null && cursor.moveToNext()) {//&& cursor.getCount() == k
             int categoryId = cursor.getInt(2);
@@ -336,13 +388,13 @@ public class DatabaseCRUD {
 
     public static Integer getCategoryIdUsingImageId(Integer did) {
         Integer cid = 0;
-        String selectSql = "select "+ DatabaseConstantUtil.COLUMN_CATEGORY_ID +" from " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
+        String selectSql = "select " + DatabaseConstantUtil.COLUMN_CATEGORY_ID + " from " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
                 + " where " + DatabaseConstantUtil.COLUMN_DID + "=" + did
                 + " and " + DatabaseConstantUtil.COLUMN_RANK + "=0";
 
         cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
 
-        if(cursor.getCount() == 0l) {
+        if (cursor.getCount() == 0l) {
             DebugUtil.showDebug("DatabaseCRUD,  getCategoryIdUsingImageId(), 분류가 되어있지 않은 이미지");
         }
         while (cursor != null && cursor.moveToNext()) {//&& cursor.getCount() == k

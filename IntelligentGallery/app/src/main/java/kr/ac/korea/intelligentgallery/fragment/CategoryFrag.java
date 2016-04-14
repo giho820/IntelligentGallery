@@ -185,7 +185,7 @@ public class CategoryFrag extends ParentFrag implements OnBackPressedListener {
 
                 //FolderCategory 액티비티의 메뉴를 변경해야한다
                 categoryAct.toolbar.getMenu().clear();
-                categoryAct.toolbar.inflateMenu(R.menu.menu_folder_long_clicked);
+                categoryAct.toolbar.inflateMenu(R.menu.menu_category_long_clicked);
 
                 return true;
 //            case R.id.action_arranging_floder_category:
@@ -216,32 +216,37 @@ public class CategoryFrag extends ParentFrag implements OnBackPressedListener {
 
                 return true;
             case R.id.action_delete:
-                DebugUtil.showToast(categoryAct, "삭제하기");
                 if (imagesInFolder != null && imagesInFolder.size() > 0) {
-                    int removedCount = 0;
+                    ArrayList<Integer> sortedSelectedPositions = new ArrayList<>();
+                    sortedSelectedPositions.addAll(CategoryFrag.selectedPositions);
+                    Collections.sort(sortedSelectedPositions);
+                    CategoryFrag.selectedPositionsList = sortedSelectedPositions;
+                    DebugUtil.showDebug("before delete::totalCount::" + imagesInFolder.size());
                     for (int i = imagesInFolder.size() - 1; i >= 0; i--) {
-                        if (selectedPositionsList.contains(i)) {
-                            removedCount++;
-                            DebugUtil.showDebug("deleting Process, selectedPositions : " + selectedPositions.toString());
-                            DebugUtil.showDebug("deleting Process, removedCount : " + removedCount);
-                            selectedPositions.remove(i);
-                            DebugUtil.showDebug("deleting Process, 삭제 이전 : imagesInFolder.get(i).path : " + imagesInFolder.get(i).getPath());
-                            FileUtil.removeDir(mContext, imagesInFolder.get(i).getPath());
-                            imagesInFolder.remove(i);
+                        if (imagesInFolder.get(i).getIsChecked()) {
+                            DebugUtil.showDebug("지울 대상 : " + imagesInFolder.get(i).getPath());
+//                            DatabaseCRUD.deleteSpecificIdQuery(imagesInFolder.get(i).getId());
+                            FileUtil.deleteImage(mContext, imagesInFolder.get(i).getPath());
+                            imagesInFolder.remove(imagesInFolder.get(i));
                         }
                     }
+                    DebugUtil.showDebug("after delete::totalCount::" + imagesInFolder.size());
+                    selectedPositionsList.clear();
+                    selectedPositions.clear();
 
-                    //UI refresh 임시방안
-                    selectedPositionsList.addAll(selectedPositions);
-                    imageAdapter.notifyDataSetChanged();
-                    imageAdapter = new CategoryFragImageAdapter(categoryAct, imagesInFolder);
-                    gridViewCategoryFrag.setAdapter(imageAdapter);
-                    DebugUtil.showToast(categoryAct, "지워진 개수 : " + removedCount);
-                    for (int i = 0; i < imagesInFolder.size(); i++) {
-                        DebugUtil.showDebug("deleting Process, 삭제 이후 : imagesInFolder.get(" + i + ").path : " + FileUtil.getFileNameFromPath(imagesInFolder.get(i).getPath()));
-                    }
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (CategoryFrag.isLongClicked)
+                                imageAdapter.setItems(imagesInFolder);
+
+                            onResume();
+                            onBackPressed();
+                        }
+                    }, 1000);
                 }
                 return true;
+
             case R.id.action_detail:
 
                 if (imagesInFolder != null && imagesInFolder.size() > 0) {
@@ -271,46 +276,46 @@ public class CategoryFrag extends ParentFrag implements OnBackPressedListener {
 //            case R.id.action_rotation:
 //                return true;
 
-            case R.id.action_moving:
-                DebugUtil.showToast(categoryAct, "이동하기");
-
-                if (imagesInFolder != null && imagesInFolder.size() > 0) {
-                    for (int i = 0; i < imagesInFolder.size(); i++) {
-                        if (selectedPositionsList.contains(i)) {
-                            final String currentPath = imageAdapter.getItem(i).getPath();
-                            DebugUtil.showDebug("i : " + i + ", currentPath: " + currentPath);
-
-                            imagesInFolder.remove(i);
-                        }
-                    }
-                }
-
-                //임시방안
-                imageAdapter = new CategoryFragImageAdapter(categoryAct, imagesInFolder);
-                gridViewCategoryFrag.setAdapter(imageAdapter);
-
-                return true;
-            case R.id.action_copying:
-                DebugUtil.showToast(categoryAct, "복사하기");
-
-                if (imagesInFolder != null && imagesInFolder.size() > 0) {
-                    for (int i = 0; i < imagesInFolder.size(); i++) {
-                        if (selectedPositionsList.contains(i)) {
-                            final String currentPath = imageAdapter.getItem(i).getPath();
-                            DebugUtil.showDebug("i : " + i + ", currentPath: " + currentPath);
-//                            FileUtil.fileCopy(currentPath, MainAct.root + "/new/"+FileUtil.getFileNameFromPath(currentPath));
-                        }
-                    }
-                }
-
-                //임시방안
-                imageAdapter = new CategoryFragImageAdapter(categoryAct, imagesInFolder);
-                gridViewCategoryFrag.setAdapter(imageAdapter);
-
-                return true;
-            case R.id.action_renaming:
-                DebugUtil.showToast(categoryAct, "이름바꾸기");
-                return true;
+//            case R.id.action_moving:
+//                DebugUtil.showToast(categoryAct, "이동하기");
+//
+//                if (imagesInFolder != null && imagesInFolder.size() > 0) {
+//                    for (int i = 0; i < imagesInFolder.size(); i++) {
+//                        if (selectedPositionsList.contains(i)) {
+//                            final String currentPath = imageAdapter.getItem(i).getPath();
+//                            DebugUtil.showDebug("i : " + i + ", currentPath: " + currentPath);
+//
+//                            imagesInFolder.remove(i);
+//                        }
+//                    }
+//                }
+//
+//                //임시방안
+//                imageAdapter = new CategoryFragImageAdapter(categoryAct, imagesInFolder);
+//                gridViewCategoryFrag.setAdapter(imageAdapter);
+//
+//                return true;
+//            case R.id.action_copying:
+//                DebugUtil.showToast(categoryAct, "복사하기");
+//
+//                if (imagesInFolder != null && imagesInFolder.size() > 0) {
+//                    for (int i = 0; i < imagesInFolder.size(); i++) {
+//                        if (selectedPositionsList.contains(i)) {
+//                            final String currentPath = imageAdapter.getItem(i).getPath();
+//                            DebugUtil.showDebug("i : " + i + ", currentPath: " + currentPath);
+////                            FileUtil.fileCopy(currentPath, MainAct.root + "/new/"+FileUtil.getFileNameFromPath(currentPath));
+//                        }
+//                    }
+//                }
+//
+//                //임시방안
+//                imageAdapter = new CategoryFragImageAdapter(categoryAct, imagesInFolder);
+//                gridViewCategoryFrag.setAdapter(imageAdapter);
+//
+//                return true;
+//            case R.id.action_renaming:
+//                DebugUtil.showToast(categoryAct, "이름바꾸기");
+//                return true;
 
             case R.id.action_viewing_in_map:
                 DebugUtil.showDebug("CategoryFrag.selectedPositions ::" + CategoryFrag.selectedPositions);
