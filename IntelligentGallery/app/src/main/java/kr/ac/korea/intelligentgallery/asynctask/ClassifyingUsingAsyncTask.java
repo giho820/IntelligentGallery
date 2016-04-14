@@ -35,11 +35,6 @@ public class ClassifyingUsingAsyncTask extends AsyncTask<Integer, String, Intege
     protected void onPreExecute() {
         super.onPreExecute();
         DebugUtil.showDebug("ClassifyingUsingAsyncTask, onPreExecute() ");
-
-//        //디비 저장 전 테이블에 내용이 있으면 지울 것(분류 중에 어플을 강제로 시작할 경우에만 실행 됨)
-//        String deleteQuery = "delete from " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME + ";";
-//        DebugUtil.showDebug(deleteQuery);
-//        DatabaseCRUD.execRawQuery(deleteQuery);
     }
 
     @Override
@@ -58,13 +53,9 @@ public class ClassifyingUsingAsyncTask extends AsyncTask<Integer, String, Intege
             String[] projection = {MediaStore.Images.ImageColumns._ID, MediaStore.Images.ImageColumns.DATA};
             String select = MediaStore.Images.ImageColumns.LATITUDE + " is not null and " + MediaStore.Images.ImageColumns.LONGITUDE + " is not null and " +
                     MediaStore.Images.ImageColumns.LATITUDE + " != 0 and " + MediaStore.Images.ImageColumns.LONGITUDE + " != 0";
-//            Cursor cursor = mCr.query(uri, projection, null, null, null);//test
             Cursor cursor = mCr.query(uri, projection, select, null, null);
 
-            if (cursor == null) {
-                return 0;
-            }
-            while (cursor.moveToNext()) {
+            while (cursor != null && cursor.moveToNext()) {
 
                 Integer imageId = cursor.getInt(cursor.getColumnIndex(projection[0]));
                 String imageFileUriPath = FileUtil.getImagePath(mContext, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + imageId));
@@ -86,11 +77,9 @@ public class ClassifyingUsingAsyncTask extends AsyncTask<Integer, String, Intege
                 imageFile.setName(imageName);
                 imageFile.setCategoryId((Integer) rank0CategoryInfoAboutImage.keySet().toArray()[0]);
                 imageFile.setCategoryName((String) rank0CategoryInfoAboutImage.values().toArray()[0]);
-
                 imageFile.setPath(imageFileUriPath);
                 imageFile.setRecentImageFileID(imageId);
                 intent.putExtra("newImageFile", imageFile);
-
                 mContext.sendBroadcast(intent);
             }
             cursor.close();
@@ -102,13 +91,11 @@ public class ClassifyingUsingAsyncTask extends AsyncTask<Integer, String, Intege
 
             ArrayList<Integer> dbImages = new ArrayList<>();
             ArrayList<ImageFile> mediaImages = new ArrayList<>();
-            ArrayList<Integer> uselessDids = new ArrayList<>();
             dbImages = DatabaseCRUD.getImagesIdsInInvertedIndexDb();
             mediaImages = FileUtil.getImagesHavingGPSInfo(mContext);
             int dbImageCnt = dbImages.size();
             int mediaImageCnt = mediaImages.size();
-            if (dbImageCnt > mediaImageCnt) {
-                //외부에서 사진이 지워져서 필요없는 사진이 DB에 남아았다면 이를 제거하는 함수
+            if (dbImageCnt > mediaImageCnt) {//외부에서 사진이 지워져서 필요없는 사진이 DB에 남아았다면 이를 제거하는 함수
                 DiLabClassifierUtil.deleteUselessDB(mContext);
             }
         }

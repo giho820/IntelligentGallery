@@ -41,6 +41,27 @@ public class FileUtil {
         return value;
     }
 
+    public static Integer getAllImageFilesThatHaveGPSInfoCount(Context context) {
+        //미디어 스토리지 이용하는 방법
+        ContentResolver mCr;
+        Integer result = 0;
+
+        mCr = context.getContentResolver();
+        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+
+        String[] projectionForAlbumImage = {MediaStore.Images.ImageColumns._ID, MediaStore.Images.ImageColumns.DATA, MediaStore.Images.ImageColumns.LATITUDE, MediaStore.Images.ImageColumns.LONGITUDE};
+        String select = MediaStore.Images.ImageColumns.LATITUDE + " is not null and " + MediaStore.Images.ImageColumns.LONGITUDE + " is not null";
+        Cursor cursor = mCr.query(uri, projectionForAlbumImage, select, null, null);
+        while (cursor.moveToNext()) {
+            result = cursor.getCount();
+//            DebugUtil.showDebug("위도 경도 정보가 있는 이미지 전체::" + getColumeValue(cursor, projectionForAlbumImage[1]));
+        }
+        cursor.close();
+        DebugUtil.showDebug("위도 경도를 가진 파일의 전체 개수  : " + result);
+
+        return result;
+    }
+
 
     public static String getImagePath(Context context, Uri uri) {
         String path = "";
@@ -156,26 +177,7 @@ public class FileUtil {
         return result;
     }
 
-    public static Integer getAllImageFilesThatHaveGPSInfoCount(Context context) {
-        //미디어 스토리지 이용하는 방법
-        ContentResolver mCr;
-        Integer result = 0;
 
-        mCr = context.getContentResolver();
-        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-
-        String[] projectionForAlbumImage = {MediaStore.Images.ImageColumns._ID, MediaStore.Images.ImageColumns.DATA, MediaStore.Images.ImageColumns.LATITUDE, MediaStore.Images.ImageColumns.LONGITUDE};
-        String select = MediaStore.Images.ImageColumns.LATITUDE + " is not null and " + MediaStore.Images.ImageColumns.LONGITUDE + " is not null";
-        Cursor cursor = mCr.query(uri, projectionForAlbumImage, select, null, null);
-        while (cursor.moveToNext()) {
-            result = cursor.getCount();
-//            DebugUtil.showDebug("위도 경도 정보가 있는 이미지 전체::" + getColumeValue(cursor, projectionForAlbumImage[1]));
-        }
-        cursor.close();
-        DebugUtil.showDebug("위도 경도를 가진 파일의 전체 개수  : " + result);
-
-        return result;
-    }
 
 
     //위도 경도를 가진 모든 이미지들을 반환하는 함수
@@ -1027,14 +1029,17 @@ public class FileUtil {
     }
 
     public static void updateMediaStorageQuery(Context context) {
+        //kitkat 적용 테스트
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            DebugUtil.showDebug("킷캣 이후 버젼, FileUtil, updateMediaStorageQuery(), ACTION_MEDIA_MOUNTED, sendBroadcast 시작");
             Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-            File f = new File("file://" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES));
-            Uri contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            Uri contentUri = Uri.parse("file://" + Environment.getExternalStorageDirectory()); //out is your output file
             mediaScanIntent.setData(contentUri);
             context.sendBroadcast(mediaScanIntent);
         } else {
+            //Full Scan 강제 시작
             context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory())));
+            DebugUtil.showDebug("킷캣 이전 버젼, FileUtil, updateMediaStorageQuery(), ACTION_MEDIA_MOUNTED, sendBroadcast 시작");
         }
     }
 
@@ -1048,7 +1053,6 @@ public class FileUtil {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             DebugUtil.showDebug("킷캣 이상 버젼, not allowed to send broadcast android.intent.action.MEDIA_MOUNTED");
             Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-            File f = new File("file://" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES));
             Uri contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
             mediaScanIntent.setData(contentUri);
             context.sendBroadcast(mediaScanIntent);
@@ -1057,12 +1061,17 @@ public class FileUtil {
             Log.e("-->", " >= 14, 아이스크림 샌드위치 이상 ");
             context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory())));
 
-            MediaScannerConnection.scanFile(context, new String[]{Environment.getExternalStorageDirectory().toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
-                public void onScanCompleted(String path, Uri uri) {
-                    Log.e("ExternalStorage", "Scanned " + path + ":");
-                    Log.e("ExternalStorage", "-> uri=" + uri);
-                }
-            });
+            try {
+                MediaScannerConnection.scanFile(context, new String[]{Environment.getExternalStorageDirectory().toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
+                    public void onScanCompleted(String path, Uri uri) {
+                        Log.e("ExternalStorage", "Scanned " + path + ":");
+                        Log.e("ExternalStorage", "-> uri=" + uri);
+                    }
+                });
+            } catch (Exception e){
+                DebugUtil.showDebug(""+e.getStackTrace());
+            }
+
         } else {
             Log.e("-->", " < 14, 아이스크림 샌드위치 미만");
             context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory())));
@@ -1078,7 +1087,6 @@ public class FileUtil {
 
         final String[] projection = {MediaStore.Images.Media._ID, MediaStore.Images.Media.DATA, MediaStore.Images.Media.TITLE};
         final String selection = MediaStore.Images.Media.TITLE + " like '%" + partial_file_name.toString() + "%'";
-//        final String[] selectionArgs = new String[]{partial_file_name};
 
         new Handler().postDelayed(new Runnable() {
             @Override
@@ -1091,14 +1099,6 @@ public class FileUtil {
                     results.add(id);
                     DebugUtil.showDebug("[search] found, id:::::::" + id + ", size::" + results.size());
                 }
-//                if (c.moveToFirst()) {
-//                    // We found the ID. Deleting the item via the content provider will also remove the file
-//                    int id = c.getInt(c.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
-//                    DebugUtil.showDebug("[search] found, id:::::::"+id );
-//                } else {
-//                    // File not found in media store DB
-//                    DebugUtil.showDebug("[search] findImagesInSearchResultAct, search not matched");
-//                }
                 c.close();
             }
         }, 1000);

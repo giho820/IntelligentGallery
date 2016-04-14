@@ -159,15 +159,11 @@ public class DatabaseCRUD {
         cursor = DatabaseHelper.sqLiteDatabase.rawQuery("select distinct " + DatabaseConstantUtil.COLUMN_DID + " from " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
                 + " where " + DatabaseConstantUtil.COLUMN_RANK + "=0", null);
 
-//        cursor.moveToFirst();
         while (cursor != null && cursor.moveToNext()) {
-//            if (cursor.getCount() >0 && result.size() > cursor.getPosition())
             if (cursor.getCount() > 0)
                 result.add(cursor.getInt(0));
         }
-
         cursor.close();
-
         return result;
     }
 

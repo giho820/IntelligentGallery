@@ -180,7 +180,6 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
             case R.id.action_slide_show:
 
                 Intent intent2SlideShowAct = new Intent(mContext, SlideShowAct.class);
-//                intent2SlideShowAct.putExtra("albumFromFolderFrag", album.getPath());
                 intent2SlideShowAct.putExtra("SlideShow Start Location is FolderFrag or CategoryFragInAlbum", 0);
                 intent2SlideShowAct.putExtra("albumFromFolderFrag", album);
                 MoveActUtil.moveActivity(folderCategoryAct, intent2SlideShowAct, -1, -1, false, false);
@@ -266,8 +265,6 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
                                     FileUtil.updateAlbumName(folderCategoryAct, album.getId(), fileNow.getName());
                                     DebugUtil.showDebug("rename folder:: FolderFrag, after inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificAlbum(folderCategoryAct, album.getId()));//업데이트 이후
 
-//                                    folderCategoryAct.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(filePre)));
-
                                     FileUtil.callBroadCast(folderCategoryAct);
                                     DebugUtil.showDebug("FolderFrag, case R.id.action_renaming:, sendBroadcast 시작");
 
@@ -281,7 +278,6 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
                                 }
                                 break;
                             case CommonDialog.NEGATIVE:
-//                                DebugUtil.showToast(folderCategoryAct, "이름변경 취소");
                                 break;
                         }
                     }
@@ -550,7 +546,6 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
                     ContentResolver mCr = folderCategoryAct.getContentResolver();
                     MediaStore.Images.Media media = new MediaStore.Images.Media();
 
-//                    ArrayList<String> strings = new ArrayList<>();
                     for (Integer i : selectedPositionsList) {
                         //파일들 복사
                         FileUtil.copyFile(imagesInFolder.get(i).getPath(), destinationFolderPath);
@@ -558,16 +553,6 @@ public class FolderFrag extends ParentFrag implements OnBackPressedListener {
                         folderCategoryAct.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(copiedFile)));
                     }
 
-//                    try {
-//                        DebugUtil.showDebug("FolderFrag, before inserted DB _DATA::" + FileUtil.viewColumnInfoOfSpecificImageFile(folderCategoryAct, imagesInFolder.get(i).getId(), MediaStore.Images.Media.DATA));//insert 이전
-//                        //insert
-//                        media.insertImage(mCr, destinationFolderPath + "/" + imageName, imageName, imageName);
-//                        DebugUtil.showDebug("FolderFrag, after inserted DB _DATA::" + FileUtil.viewIdOfSpecificImageFileUsingPath(folderCategoryAct, destinationFolderPath + "/" + imageName, MediaStore.Images.Media._ID));//insert 이후
-//                    } catch (FileNotFoundException e) {
-//                        e.printStackTrace();
-//                        DebugUtil.showDebug(e.getMessage());
-//                    }
-//
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {

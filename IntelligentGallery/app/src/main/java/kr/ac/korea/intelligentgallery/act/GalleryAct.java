@@ -282,11 +282,6 @@ public class GalleryAct extends ParentAct {
                                 public void run() {
                                     imageAdapter.setItems(imagesInSameFolder);
 
-//                            if (selectedPostion < imagesInSameFolder.size()) {
-//                                imageAdapter.setPosition(selectedPostion);
-//                            } else {
-//                                imageAdapter.setPosition(imagesInSameFolder.size() - 1);
-//                            }
                                     DebugUtil.showDebug("case R.id.action_delete currentAlbumBucketId::" + currentAlbumBucketId);
                                     onBackPressed();
                                 }
@@ -294,8 +289,6 @@ public class GalleryAct extends ParentAct {
                         }
                     }, 1000);
 
-//                    imageAdapter.addItems(imagesInSameFolder);
-//                    imageAdapter.notifyDataSetChanged();
                     DebugUtil.showDebug("[Delete] After delete==============");
                     DebugUtil.showDebug("[Delete] position::" + selectedPostion);
                     DebugUtil.showDebug("[Delete] images size::" + imagesInSameFolder.size());
@@ -528,9 +521,7 @@ public class GalleryAct extends ParentAct {
                 DebugUtil.showDebug("GalleryAct, MatchingAsyncTask, " + matchingResultImages.size());
                 if (matchingImageRecyclerAdapter != null) {
                     matchingImageRecyclerAdapter.setAdapterArrayList(matchingResultImages);
-//                    if (matchingResultImages.size() > 1)
-//                        recyclerView.addItemDecoration(new ItemDecorationMatchingImg(getResources().getDimensionPixelSize(R.dimen.dp_5), matchingResultImages.size()));
-                    matchingImageRecyclerAdapter.notifyDataSetChanged();
+                   matchingImageRecyclerAdapter.notifyDataSetChanged();
 
                 }
             } else {
@@ -651,19 +642,6 @@ public class GalleryAct extends ParentAct {
                 }
             });
 
-// 회전은 되나 뷰페이지 성능이 엉망임
-//            Uri currentImageFileUri = Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI+"/"+currentImageFileImage.getId());
-//            Bitmap bitmap;
-//            try {
-//                bitmap = ImageUtil.scaleImage(GalleryAct.this, currentImageFileUri);
-//                int nh = (int) ( ImageUtil.getDeviceWidth(GalleryAct.this) * (512.0 /ImageUtil.getDeviceWidth(GalleryAct.this)) );
-//                Bitmap scaled = Bitmap.createScaledBitmap(bitmap, 512, nh, true);
-//                imageView.setImageBitmap(scaled);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-
-
             if (items.get(position).getId() != null) {
                 float currentOrientation = ExifUtil.getOrientation(GalleryAct.this, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + items.get(position).getId()));
                 DebugUtil.showDebug("GalleryAct, currentOrientation::" + currentOrientation);
@@ -727,17 +705,6 @@ public class GalleryAct extends ParentAct {
                                             .onlyScaleDown()
                                             .rotate(ExifUtil.getOrientation(GalleryAct.this, Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + items.get(position).getId())))
                                             .into(imageView);
-
-//                                    Uri currentImageFileUri = Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + currentImageFileImage.getId());
-//                                    Bitmap bitmap;
-//                                    try {
-//                                        bitmap = ImageUtil.scaleImage(GalleryAct.this, currentImageFileUri);
-//                                        int nh = (int) (ImageUtil.getDeviceHeight(GalleryAct.this) * (512.0 / ImageUtil.getDeviceWidth(GalleryAct.this)));
-//                                        Bitmap scaled = Bitmap.createScaledBitmap(bitmap, 512, nh, true);
-//                                        imageView.setImageBitmap(scaled);
-//                                    } catch (IOException e) {
-//                                        e.printStackTrace();
-//                                    }
                                 }
                             }, 0);
                         }

@@ -93,9 +93,8 @@ public class DiLabClassifierUtil {
         return top0Info;
     }
 
+    // 외부에서 사진을 지웠을 때 같은 상황에서 사용하는 함수
     public static void deleteUselessDB(Context context){
-        // 외부에서 사진을 지웠을 때 같은 상황
-        // 만일 외부에서 사진을 지워서 디비의 개수가 쿼리에 있는 분류해야할 사진의 개수보다 많다면
         ArrayList<Integer> dbImages = new ArrayList<>();
         ArrayList<ImageFile> mediaImages = new ArrayList<>();
         ArrayList<Integer> uselessDids = new ArrayList<>();
@@ -107,6 +106,7 @@ public class DiLabClassifierUtil {
 
         DebugUtil.showDebug("zzz", "ClassifyingUsingAsyncTask, ", "" + dbImageCnt);
         DebugUtil.showDebug("zzz", "ClassifyingUsingAsyncTask, ", "" + mediaImageCnt);
+        // 만일 외부에서 사진을 지워서 디비의 개수가 쿼리에 있는 분류해야할 사진의 개수보다 많다면
         if (mediaImageCnt < dbImageCnt) {
             DebugUtil.showDebug("zzz, 외부에서 사진을 지워서 디비에 불필요한 이미지가 저장된 상태");
 

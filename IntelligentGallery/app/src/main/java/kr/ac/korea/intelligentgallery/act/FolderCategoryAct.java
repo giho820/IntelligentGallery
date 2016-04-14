@@ -241,19 +241,6 @@ public class FolderCategoryAct extends ParentAct implements View.OnClickListener
             inflater.inflate(R.menu.menu_folder_long_clicked, menu);
         }
 
-//        if (!FolderFrag.isLongClicked) {
-//            if (!CategoryFragInAlbum.isLongClicked)
-//                inflater.inflate(R.menu.menu_folder, menu);
-//            else
-//                inflater.inflate(R.menu.menu_category_long_clicked, menu);
-//        }
-//        if (FolderFrag.isLongClicked) {
-//            if (!CategoryFragInAlbum.isLongClicked)
-//                inflater.inflate(R.menu.menu_folder_long_clicked, menu);
-//            else
-//                inflater.inflate(R.menu.menu_folder, menu);
-//        }
-
         return true;
     }
 
@@ -325,9 +312,6 @@ public class FolderCategoryAct extends ParentAct implements View.OnClickListener
                 ArrayList<ImageFile> updatedImageFiles = FileUtil.getImages(FolderCategoryAct.this, albumFromMainAct);
 
                 folderFrag.imageAdapter.addItems(updatedImageFiles);
-
-//                categoryFragInAlbum.imageAdapter.addItems(updatedCategories);
-//                categoryFragInAlbum.setImagesInFolder(updatedImageFiles);
             }
         }
     }

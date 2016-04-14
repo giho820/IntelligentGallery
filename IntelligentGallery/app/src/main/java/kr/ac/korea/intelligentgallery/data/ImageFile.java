@@ -24,8 +24,8 @@ public class ImageFile implements Serializable {
     private String categoryName;
     private Integer rank;
     private Float score;
-    private String recentImageFile;
-    private Integer recentImageFileID;
+    private String recentImageFile;//category 대표이미지 path
+    private Integer recentImageFileID;//category 대표이미지 아이디
     private String date_taken;
     private String date_added;
     private String date_modified;
