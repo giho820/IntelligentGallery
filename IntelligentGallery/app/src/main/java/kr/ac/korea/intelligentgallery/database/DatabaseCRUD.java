@@ -141,10 +141,10 @@ public class DatabaseCRUD {
 
     public static boolean doesAlbumBucketIdExist(Album album) {
         boolean isExist;
-        cursor = DatabaseHelper.sqLiteDatabase.rawQuery("select "+ DatabaseConstantUtil.COLUMN_ALBUM_BUCKET_ID+" from " + DatabaseConstantUtil.TABLE_ALBUM_COVER + " where "
-                + DatabaseConstantUtil.COLUMN_ALBUM_BUCKET_ID + " = " + album.getId() +";", null);
-        DebugUtil.showDebug("gg 들어온 앨범 아이디 :: " + album.getId() +"cursor.getcount :: " + cursor.getCount());
-        if(cursor.getCount() == 1)
+        cursor = DatabaseHelper.sqLiteDatabase.rawQuery("select " + DatabaseConstantUtil.COLUMN_ALBUM_BUCKET_ID + " from " + DatabaseConstantUtil.TABLE_ALBUM_COVER + " where "
+                + DatabaseConstantUtil.COLUMN_ALBUM_BUCKET_ID + " = " + album.getId() + ";", null);
+        DebugUtil.showDebug("gg 들어온 앨범 아이디 :: " + album.getId() + "cursor.getcount :: " + cursor.getCount());
+        if (cursor.getCount() == 1)
             isExist = true;
         else
             isExist = false;
@@ -177,7 +177,7 @@ public class DatabaseCRUD {
         cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectQuery, null);
 
         while (cursor != null && cursor.moveToNext()) {
-            if (cursor.getCount() > 0){
+            if (cursor.getCount() > 0) {
                 coverImageId = cursor.getInt(0);
 //                DebugUtil.showDebug("DatabaseCRUD, getCoverImagePathOfSpecificAlbum :: coverImageID :: " + coverImageId);
             }
@@ -239,44 +239,36 @@ public class DatabaseCRUD {
         ArrayList<Category> categoryArrayList = new ArrayList<>();
         if (list == null) {
             return null;
-        }
-//        DebugUtil.showDebug(TAG + "list::size::" + list.size());
-        for (ImageFile ifs : list) {
+        } else {
+            for (ImageFile ifs : list) {
+
 //            DebugUtil.showDebug(TAG + "ifs::" + ifs.getId());
 
-            //대표적인 카테고리 아이디를 검색하는 쿼리
-            String selectSql = "SELECT " + DatabaseConstantUtil.COLUMN_CATEGORY_ID +
-                    " FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
-                    + " where " + DatabaseConstantUtil.COLUMN_DID + "=" + ifs.getId()
-                    + " and " + DatabaseConstantUtil.COLUMN_RANK + "=0";
-            Cursor cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
+                //대표적인 카테고리 아이디를 검색하는 쿼리
+                String selectSql = "SELECT " + DatabaseConstantUtil.COLUMN_CATEGORY_ID +
+                        " FROM " + DatabaseConstantUtil.TABLE_INTELLIGENT_GALLERY_NAME
+                        + " where " + DatabaseConstantUtil.COLUMN_DID + "=" + ifs.getId()
+                        + " and " + DatabaseConstantUtil.COLUMN_RANK + "=0";
+                Cursor cursor = DatabaseHelper.sqLiteDatabase.rawQuery(selectSql, null);
 
-//            if (cursor == null) {
-//                cursor.close();
-//                return null;
-//            }
-//            if (cursor.getCount() <= 0) {
-//                cursor.close();
-//                return null;
-//            }
-
-            if (cursor != null && cursor.getCount() > 0) {
-                cursor.moveToFirst();
-                Category category = new Category();
-                category.setcID(cursor.getInt(0));
-                category.setCoverImageId(ifs.getId());
-                ArrayList<ImageFile> tempImageFiles = new ArrayList<>();
-                tempImageFiles.add(ifs);
-                category.setContainingImages(tempImageFiles);
+                if (cursor != null && cursor.getCount() > 0) {
+                    cursor.moveToFirst();
+                    Category category = new Category();
+                    category.setcID(cursor.getInt(0));
+                    category.setCoverImageId(ifs.getId());
+                    ArrayList<ImageFile> tempImageFiles = new ArrayList<>();
+                    tempImageFiles.add(ifs);
+                    category.setContainingImages(tempImageFiles);
 //            while (cursor.moveToNext()) {
 //                int categoryID = cursor.getInt(0);
 //                cIDsInImageList.add(categoryID);
 //            }
-                categoryArrayList.add(category);
+                    categoryArrayList.add(category);
+                }
+                cursor.close();
             }
-            cursor.close();
-
         }
+
 
         return categoryArrayList;
     }
